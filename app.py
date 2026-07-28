@@ -52,11 +52,16 @@ if st.session_state.night_mode:
         .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp span, .stApp div, .stApp label, .stApp li {
             color: #fafafa !important;
         }
-        /* Fix ALL SVG icons (password eye, selectbox arrows, sidebar expander) */
-        svg, svg *, path, [data-baseweb="icon"], [data-baseweb="icon"] * {
+        /* Fix ALL Icons (SVGs and Material Font Icons like the password eye and select caret) */
+        svg, svg *, path, [data-baseweb="icon"], [data-baseweb="icon"] *, .material-symbols-rounded, .material-icons, [data-testid="stIconMaterial"] {
             fill: #fafafa !important;
             stroke: #fafafa !important;
             color: #fafafa !important;
+        }
+        /* Force everything inside text inputs and selectboxes to be white (including the eye button) */
+        [data-baseweb="input"] *, [data-baseweb="select"] * {
+            color: #fafafa !important;
+            fill: #fafafa !important;
         }
         /* Keep checkbox inner tick visible */
         [data-baseweb="checkbox"] svg, [data-baseweb="checkbox"] path { 
