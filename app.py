@@ -49,31 +49,49 @@ if st.session_state.night_mode:
         [data-testid="stSidebar"] * {
             color: #fafafa !important;
         }
-        .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp span, .stApp div, .stApp label {
+        .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp span, .stApp div, .stApp label, .stApp li {
             color: #fafafa !important;
         }
-        /* Buttons and inputs */
-        .stButton > button {
+        /* Buttons, forms and all clickable elements */
+        .stButton > button, .stDownloadButton > button, .stFormSubmitButton > button {
             background-color: #262730 !important;
             color: #ffffff !important;
             border-color: #4b4b4b !important;
         }
-        .stButton > button:hover {
+        .stButton > button *, .stDownloadButton > button *, .stFormSubmitButton > button * {
+            color: #ffffff !important;
+        }
+        .stButton > button:hover, .stDownloadButton > button:hover, .stFormSubmitButton > button:hover {
             border-color: #ff4b4b !important;
             color: #ff4b4b !important;
         }
+        .stButton > button:hover *, .stDownloadButton > button:hover *, .stFormSubmitButton > button:hover * {
+            color: #ff4b4b !important;
+        }
         /* Inputs and dropdowns */
-        div[data-baseweb="select"] > div, input, div[data-baseweb="input"] {
+        div[data-baseweb="select"] > div, input, div[data-baseweb="input"], textarea {
             background-color: #1e1e1e !important;
             color: #fafafa !important;
             border-color: #4b4b4b !important;
         }
-        div[data-baseweb="popover"] > div {
+        /* Dropdown popover list items */
+        div[data-baseweb="popover"] > div, div[data-baseweb="popover"] ul {
             background-color: #262730 !important;
         }
+        div[data-baseweb="popover"] * {
+            color: #fafafa !important;
+        }
+        div[data-baseweb="popover"] li:hover {
+            background-color: #4b4b4b !important;
+        }
         /* Dataframes */
-        [data-testid="stDataFrame"] {
+        [data-testid="stDataFrame"], [data-testid="stDataFrame"] * {
             background-color: #1e1e1e !important;
+            color: #fafafa !important;
+        }
+        /* Tabs */
+        [data-testid="stTabs"] [data-baseweb="tab"] {
+            background-color: transparent !important;
         }
         </style>
     """, unsafe_allow_html=True)
