@@ -50,7 +50,7 @@ def login_screen():
     else:
         st.markdown(f"<h1 style='text-align: center;'>{tr('Welcome to TESSERA')}</h1><p style='text-align: center; color: gray; letter-spacing: 2px; margin-top: -15px; margin-bottom: 30px;'>SMART SCHEDULING</p>", unsafe_allow_html=True)
     
-    auth_mode = st.radio(tr("Choose Action"), [tr("Login"), tr("Sign Up")], horizontal=True)
+    auth_mode = st.radio(tr("Choose Action"), [tr("Login"), tr("Sign Up")], horizontal=True, key="auth_mode_radio")
     
     if auth_mode == tr("Login"):
         with st.container():
@@ -81,7 +81,7 @@ def login_screen():
                         st.error(tr("Invalid username or password. Please try again."))
     else:
         st.markdown(f"### {tr('Create an Account')}")
-        role = st.selectbox(tr("I am a:"), ["Student", "Professor", "Administration"], index=None, placeholder=tr("Select your role..."), format_func=tr)
+        role = st.selectbox(tr("I am a:"), ["Student", "Professor", "Administration"], index=None, placeholder=tr("Select your role..."), format_func=tr, key="signup_role_selectbox")
         if role:
             from database import get_db_connection
             conn = get_db_connection()
@@ -194,7 +194,9 @@ def login_screen():
                                 c.execute("INSERT INTO Users (username, password, role, linked_id) VALUES (?, ?, ?, ?)", 
                                           (new_username, new_password, target_role, target_id))
                                 conn.commit()
+                                st.session_state.auth_mode_radio = tr("Login")
                                 st.success(tr("Account created successfully! Please switch to Login."))
+                                st.rerun()
                             except sqlite3.IntegrityError:
                                 st.error(tr("Username already exists. Please choose a different one."))
             conn.close()
