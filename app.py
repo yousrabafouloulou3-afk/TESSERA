@@ -39,7 +39,7 @@ if st.session_state.night_mode:
     st.markdown("""
         <style>
         /* Comprehensive Dark Mode Injection */
-        .stApp, .stApp > header {
+        html, body, .stApp, .stApp > header {
             background-color: #0e1117 !important;
             color: #fafafa !important;
         }
@@ -52,11 +52,14 @@ if st.session_state.night_mode:
         .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp span, .stApp div, .stApp label, .stApp li {
             color: #fafafa !important;
         }
-        /* Fix SVG icons (password eye, sidebar expander, etc.) */
-        .stApp svg, .stApp svg path {
+        /* Fix ALL SVG icons (password eye, selectbox arrows, sidebar expander) */
+        svg, svg *, [data-baseweb="icon"], [data-baseweb="icon"] * {
             fill: #fafafa !important;
+            stroke: #fafafa !important;
             color: #fafafa !important;
         }
+        /* Keep checkbox inner tick visible */
+        [data-baseweb="checkbox"] svg { fill: none !important; }
         /* Buttons, forms and all clickable elements */
         .stButton > button, .stDownloadButton > button, .stFormSubmitButton > button {
             background-color: #262730 !important;
@@ -68,9 +71,6 @@ if st.session_state.night_mode:
         }
         .stButton > button:hover, .stDownloadButton > button:hover, .stFormSubmitButton > button:hover {
             border-color: #ff4b4b !important;
-            color: #ff4b4b !important;
-        }
-        .stButton > button:hover *, .stDownloadButton > button:hover *, .stFormSubmitButton > button:hover * {
             color: #ff4b4b !important;
         }
         /* Inputs and dropdowns */
