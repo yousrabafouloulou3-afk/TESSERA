@@ -56,8 +56,8 @@ def login_screen():
         with st.container():
             st.markdown(f"### {tr('Please enter your credentials')}")
             with st.form("login_form"):
-                username = st.text_input(tr("Username"))
-                password = st.text_input(tr("Password"), type="password")
+                username = st.text_input(tr("Username"), key="login_username")
+                password = st.text_input(tr("Password"), type="password", key="login_password")
                 submitted = st.form_submit_button(tr("Login"))
                 
                 if submitted:
@@ -178,8 +178,8 @@ def login_screen():
 
             if show_form:
                 with st.form("signup_form"):
-                    new_username = st.text_input(tr("Choose Personal Username"))
-                    new_password = st.text_input(tr("Choose Personal Password"), type="password")
+                    new_username = st.text_input(tr("Choose Personal Username"), key="signup_username")
+                    new_password = st.text_input(tr("Choose Personal Password"), type="password", key="signup_password")
 
                     submitted = st.form_submit_button(tr("Sign Up"))
 
