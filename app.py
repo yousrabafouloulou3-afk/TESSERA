@@ -35,6 +35,7 @@ if 'language' not in st.session_state:
 # Inject minimal modern CSS
 st.markdown("""
     <style>
+    .stAppDeployButton {display:none !important;}
     .stApp {
         background-color: transparent;
     }
