@@ -52,6 +52,11 @@ if st.session_state.night_mode:
         .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp span, .stApp div, .stApp label, .stApp li {
             color: #fafafa !important;
         }
+        /* Fix SVG icons (password eye, sidebar expander, etc.) */
+        .stApp svg, .stApp svg path {
+            fill: #fafafa !important;
+            color: #fafafa !important;
+        }
         /* Buttons, forms and all clickable elements */
         .stButton > button, .stDownloadButton > button, .stFormSubmitButton > button {
             background-color: #262730 !important;
