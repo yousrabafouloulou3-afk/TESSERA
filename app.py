@@ -32,27 +32,6 @@ st.set_page_config(page_title="TESSERA", page_icon=logo_img, layout="wide", init
 if 'language' not in st.session_state:
     st.session_state.language = 'English'
 
-
-# Initialise visual night mode setting
-if 'night_mode_visual' not in st.session_state:
-    st.session_state.night_mode_visual = False
-
-if st.session_state.night_mode_visual:
-    st.markdown("""
-        <style>
-        .stApp { background-color: #1e1e1e !important; color: #ffffff !important; --text-color: #ffffff !important; }
-        .stApp p { color: #f0f0f0 !important; }
-        h1, h2, h3 { color: #ffffff !important; }
-        div.stButton > button p, div.stButton > button span, div.stButton > button div {
-            color: #000000 !important;
-        }
-        [data-testid="stSidebar"] {
-            background-color: #1e1e1e !important;
-            color: #ffffff !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
 # Inject minimal modern CSS
 st.markdown("""
     <style>
@@ -153,7 +132,7 @@ def main():
             st.session_state.language = selected_lang
             st.rerun()
             
-        st.toggle(tr("Night Mode Toggle (Visual Only)"), key="night_mode_visual")
+
         st.divider()
 
     if st.session_state.user is None:
