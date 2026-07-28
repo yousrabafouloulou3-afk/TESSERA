@@ -1,0 +1,22 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# SQLite databases
+*.db
+*.sqlite3
+
+# Ignore temporary/scratch scripts
+scratch/
+
+# Ignore backups
+backups/
+
+# Ignore uploaded user profile pics (keep the directory but ignore contents if needed, or just ignore the whole thing if it's all generated)
+# Here we ignore all pngs in profile_pics except maybe default ones if you want, but for now we ignore the folder contents
+profile_pics/*.png
+!profile_pics/default_avatar.svg
+
+# Ignore Streamlit secrets if they exist
+.streamlit/secrets.toml

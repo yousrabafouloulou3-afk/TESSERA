@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <!-- Google Fonts: Inter for modern, clean typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Subtle glow and logo integrated into the background -->
+    <div class="bg-glow"></div>
+    <div class="bg-logo"></div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>App Menu</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('home') }}" class="nav-item {% if request.endpoint == 'home' %}active{% endif %}">Dashboard</a>
+                <a href="{{ url_for('analysis') }}" class="nav-item {% if request.endpoint == 'analysis' %}active{% endif %}">Run Analysis</a>
+                <a href="{{ url_for('settings') }}" class="nav-item {% if request.endpoint == 'settings' %}active{% endif %}">Settings</a>
+            </nav>
+            <div class="sidebar-list">
+                <div class="list-item">List Item 1</div>
+                <div class="list-item">List Item 2</div>
+                <div class="list-item">List Item 3</div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
