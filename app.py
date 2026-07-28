@@ -49,9 +49,6 @@ if st.session_state.night_mode:
         [data-testid="stSidebar"] * {
             color: #fafafa !important;
         }
-        .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp span, .stApp div, .stApp label, .stApp li {
-            color: #fafafa !important;
-        }
         /* Fix ALL Icons (SVGs and Material Font Icons like the password eye and select caret) */
         svg, svg *, path, [data-baseweb="icon"], [data-baseweb="icon"] *, .material-symbols-rounded, .material-icons, [data-testid="stIconMaterial"] {
             fill: #fafafa !important;
@@ -132,7 +129,6 @@ st.markdown("""
         background-color: rgba(128, 128, 128, 0.05) !important;
         border: none !important;
         border-radius: 0 !important;
-        clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
         margin-left: -10px;
         padding: 10px 25px !important;
         transition: all 0.3s ease;
