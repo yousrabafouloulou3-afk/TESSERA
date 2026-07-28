@@ -39,11 +39,11 @@ if st.session_state.night_mode:
     st.markdown("""
         <style>
         /* Comprehensive Dark Mode Injection */
-        html, body, .stApp, .stApp > header {
+        html, body, .stApp, .stApp > header, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
             background-color: #0e1117 !important;
             color: #fafafa !important;
         }
-        [data-testid="stSidebar"] {
+        [data-testid="stSidebar"], [data-testid="stSidebar"] > div {
             background-color: #262730 !important;
         }
         [data-testid="stSidebar"] * {
@@ -53,13 +53,16 @@ if st.session_state.night_mode:
             color: #fafafa !important;
         }
         /* Fix ALL SVG icons (password eye, selectbox arrows, sidebar expander) */
-        svg, svg *, [data-baseweb="icon"], [data-baseweb="icon"] * {
+        svg, svg *, path, [data-baseweb="icon"], [data-baseweb="icon"] * {
             fill: #fafafa !important;
             stroke: #fafafa !important;
             color: #fafafa !important;
         }
         /* Keep checkbox inner tick visible */
-        [data-baseweb="checkbox"] svg { fill: none !important; }
+        [data-baseweb="checkbox"] svg, [data-baseweb="checkbox"] path { 
+            fill: none !important; 
+            stroke: #fafafa !important;
+        }
         /* Buttons, forms and all clickable elements */
         .stButton > button, .stDownloadButton > button, .stFormSubmitButton > button {
             background-color: #262730 !important;
