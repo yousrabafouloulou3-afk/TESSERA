@@ -99,10 +99,6 @@ if st.session_state.night_mode:
             background-color: #1e1e1e !important;
             color: #fafafa !important;
         }
-        /* Tabs */
-        [data-testid="stTabs"] [data-baseweb="tab"] {
-            background-color: transparent !important;
-        }
         </style>
     """, unsafe_allow_html=True)
 
@@ -117,33 +113,6 @@ st.markdown("""
     .main-header {
         font-family: 'Inter', sans-serif;
         color: #2b2b2b;
-    }
-    
-    /* Modern 'Mosaic' Tabs (Red Aesthetic) */
-    [data-testid="stTabs"] [data-baseweb="tab-list"] {
-        gap: 2px;
-        background-color: transparent;
-        padding-bottom: 0px;
-    }
-    [data-testid="stTabs"] [data-baseweb="tab"] {
-        background-color: rgba(128, 128, 128, 0.05) !important;
-        border: none !important;
-        border-radius: 0 !important;
-        margin-left: -10px;
-        padding: 10px 25px !important;
-        transition: all 0.3s ease;
-    }
-    [data-testid="stTabs"] [data-baseweb="tab"]:first-child {
-        clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%);
-        margin-left: 0;
-    }
-    [data-testid="stTabs"] [data-baseweb="tab"]:hover {
-        background-color: rgba(128, 128, 128, 0.1) !important;
-    }
-    [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
-        background-color: rgba(214, 47, 58, 0.1) !important;
-        border-bottom: 3px solid #D62F3A !important;
-        box-shadow: inset 0 -10px 20px -10px rgba(214, 47, 58, 0.4);
     }
     /* Hide Streamlit Default Menu and Footer */
     footer {visibility: hidden !important;}
