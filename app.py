@@ -32,6 +32,53 @@ st.set_page_config(page_title="TESSERA", page_icon=logo_img, layout="wide", init
 if 'language' not in st.session_state:
     st.session_state.language = 'English'
 
+if 'night_mode' not in st.session_state:
+    st.session_state.night_mode = False
+
+if st.session_state.night_mode:
+    st.markdown("""
+        <style>
+        /* Comprehensive Dark Mode Injection */
+        .stApp, .stApp > header {
+            background-color: #0e1117 !important;
+            color: #fafafa !important;
+        }
+        [data-testid="stSidebar"] {
+            background-color: #262730 !important;
+        }
+        [data-testid="stSidebar"] * {
+            color: #fafafa !important;
+        }
+        .stApp p, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stApp span, .stApp div, .stApp label {
+            color: #fafafa !important;
+        }
+        /* Buttons and inputs */
+        .stButton > button {
+            background-color: #262730 !important;
+            color: #ffffff !important;
+            border-color: #4b4b4b !important;
+        }
+        .stButton > button:hover {
+            border-color: #ff4b4b !important;
+            color: #ff4b4b !important;
+        }
+        /* Inputs and dropdowns */
+        div[data-baseweb="select"] > div, input, div[data-baseweb="input"] {
+            background-color: #1e1e1e !important;
+            color: #fafafa !important;
+            border-color: #4b4b4b !important;
+        }
+        div[data-baseweb="popover"] > div {
+            background-color: #262730 !important;
+        }
+        /* Dataframes */
+        [data-testid="stDataFrame"] {
+            background-color: #1e1e1e !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+
 # Inject minimal modern CSS
 st.markdown("""
     <style>
@@ -133,6 +180,17 @@ def main():
             st.session_state.language = selected_lang
             st.rerun()
             
+        st.markdown("<br>", unsafe_allow_html=True)
+        # Beautiful Telegram-style Night Mode Toggle
+        col1, col2 = st.columns([8, 2])
+        with col1:
+            st.markdown(f"**🌙 {tr('Mode Nuit' if st.session_state.language == 'French' else 'Night Mode')}**")
+        with col2:
+            night_mode_toggle = st.toggle(" ", value=st.session_state.night_mode, key="night_mode_toggle_ui", label_visibility="collapsed")
+            
+        if night_mode_toggle != st.session_state.night_mode:
+            st.session_state.night_mode = night_mode_toggle
+            st.rerun()
 
         st.divider()
 
