@@ -249,8 +249,6 @@ def add_single_professor(name, specialite, is_prof, matricule):
         return False, "Professor already exists in this specialty."
         
     c.execute("INSERT INTO Profs (nameP, prof, specialite, matricule) VALUES (?, ?, ?, ?)", (name, is_prof, specialite, matricule))
-    prof_id = c.lastrowid
-    c.execute("INSERT OR IGNORE INTO Users (username, password, role, linked_id) VALUES (?, ?, 'teacher', ?)", (f"teacher_{prof_id}", "teacher123", prof_id))
     conn.commit()
     conn.close()
     return True, "Professor added successfully."

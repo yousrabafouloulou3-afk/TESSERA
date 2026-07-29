@@ -174,8 +174,6 @@ def save_professors(profs_data):
                     c.execute("INSERT INTO Profs (nameP, prof, specialite, matricule) VALUES (?, ?, ?, ?)", 
                               (name_clean, p['is_prof'], p['specialite'], p.get('matricule', '')))
                     prof_id = c.lastrowid
-                    c.execute("INSERT OR IGNORE INTO Users (username, password, role, linked_id) VALUES (?, ?, 'teacher', ?)", 
-                              (f"teacher_{prof_id}", "teacher123", prof_id))
         conn.commit()
         return True
     except Exception as e:
