@@ -193,78 +193,7 @@ def init_db():
 
 
 
-def upload_csvs_to_db(fichiers):
-    """Parses Excel like `charger_donnees` but directly shunts to DB, plus creates user accounts."""
-    for s in fichiers: fichiers[s].columns = fichiers[s].columns.str.strip()
 
-    def clean_int(val):
-        if pd.isna(val): return 0
-        try: return int(float(val))
-        except: return 0
-
-    conn = get_db_connection()
-    c = conn.cursor()
-    
-    # Clear old data purely for re-upload functionality
-    c.execute("DELETE FROM Entities")
-    c.execute("DELETE FROM Profs")
-    c.execute("DELETE FROM Modules")
-    c.execute("DELETE FROM Salles")
-    c.execute("DELETE FROM Indisponibilites")
-    # c.execute("DELETE FROM Preferences") # Preferences might be kept if manual
-    c.execute("DELETE FROM Planning")
-    
-    # Also delete dynamically generated teachers and students
-    c.execute("DELETE FROM Users WHERE role IN ('teacher', 'student')")
-    
-    # Populate Profs & Teacher users
-    if 'Profs' in fichiers:
-        for _, row in fichiers['Profs'].dropna(subset=['ID_P']).iterrows():
-            id_p = clean_int(row['ID_P'])
-            c.execute("INSERT INTO Profs (ID_P, nameP, prof) VALUES (?, ?, ?)",
-                      (id_p, str(row['nameP']), clean_int(row['prof'])))
-            # Create user for teacher
-            c.execute("INSERT INTO Users (username, password, role, linked_id) VALUES (?, ?, 'teacher', ?)",
-                      (f"teacher_{id_p}", "teacher123", id_p))
-
-    # Populate Entities & Student users
-    if 'Entites' in fichiers:
-        for _, row in fichiers['Entites'].dropna(subset=['ID_E']).iterrows():
-            id_e = clean_int(row['ID_E'])
-            c.execute("INSERT INTO Entities (ID_E, typeE, sectionID, nameE, specialite) VALUES (?, ?, ?, ?, ?)",
-                      (id_e, clean_int(row.get('typeE')), clean_int(row.get('sectionID')), str(row.get('nameE', '')), str(row.get('specialite', ''))))
-            # Create user for student group/section
-            c.execute("INSERT INTO Users (username, password, role, linked_id) VALUES (?, ?, 'student', ?)",
-                      (f"student_{id_e}", "student123", id_e))
-
-    # Populate Modules
-    if 'Modules' in fichiers:
-        for _, row in fichiers['Modules'].dropna(how='all').iterrows():
-            if pd.notna(row.get('ID_M')):
-                c.execute("INSERT INTO Modules (ID_M, typeM, nameM, ID_P, ID_E) VALUES (?, ?, ?, ?, ?)",
-                          (clean_int(row['ID_M']), clean_int(row['typeM']), str(row['nameM']), clean_int(row['ID_P']), clean_int(row['ID_E'])))
-
-    # Populate Salles
-    if 'Salles' in fichiers:
-        for _, row in fichiers['Salles'].dropna(subset=['ID_S']).iterrows():
-            c.execute("INSERT INTO Salles (ID_S, typeS, nameS) VALUES (?, ?, ?)",
-                      (clean_int(row['ID_S']), clean_int(row['typeS']), str(row['nameS'])))
-
-    # Populate AP (Indisponibilites)
-    if 'AP' in fichiers:
-        for _, row in fichiers['AP'].dropna(subset=['ID_P', 't']).iterrows():
-            c.execute("INSERT INTO Indisponibilites (ID_P, t) VALUES (?, ?)",
-                      (clean_int(row['ID_P']), clean_int(row['t'])))
-                      
-    # Optionally load Preferences if they exist in file (Teachers will also be able to overwrite this later)
-    if 'Preferences' in fichiers:
-        for _, row in fichiers['Preferences'].iterrows():
-             c.execute("INSERT OR REPLACE INTO Preferences (ID_P, ID_M, t, score) VALUES (?, ?, ?, ?)",
-                      (clean_int(row['ID_P']), clean_int(row['ID_M']), clean_int(row['t']), clean_int(row['score'])))
-
-    conn.commit()
-    conn.close()
-    return True
 
 def save_planning_to_db(planning):
     """Saves final planning list of dicts to the db, keeping the session ID stable (id = ID_M)."""

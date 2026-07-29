@@ -4,5 +4,3 @@ numpy
 Pillow
 python-pptx
 plotly
-qrcode
-openpyxl
