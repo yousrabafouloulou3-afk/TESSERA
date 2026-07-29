@@ -100,10 +100,15 @@ def login_screen():
                     prof_row = c.fetchone()
                     if prof_row:
                         target_id = prof_row['ID_P']
-                        c.execute("SELECT id FROM Users WHERE role = 'teacher' AND linked_id = ?", (target_id,))
-                        if c.fetchone():
-                            st.error(tr("Impossible. An account has already been created for this matricule."))
-                            target_id = None
+                        c.execute("SELECT id, username FROM Users WHERE role = 'teacher' AND linked_id = ?", (target_id,))
+                        existing_user = c.fetchone()
+                        if existing_user:
+                            # Allow claiming default accounts
+                            if existing_user['username'] == f"teacher_{target_id}":
+                                st.success(tr("Professor identity confirmed. You can now set your custom login details."))
+                            else:
+                                st.error(tr("Impossible. An account has already been created for this matricule."))
+                                target_id = None
                         else:
                             st.success(tr("Professor identity confirmed."))
                     else:
@@ -191,6 +196,8 @@ def login_screen():
 
                             import sqlite3
                             try:
+                                # Delete default teacher account if it exists
+                                c.execute("DELETE FROM Users WHERE role = 'teacher' AND linked_id = ? AND username = ?", (target_id, f"teacher_{target_id}"))
                                 c.execute("INSERT INTO Users (username, password, role, linked_id) VALUES (?, ?, ?, ?)", 
                                           (new_username, new_password, target_role, target_id))
                                 conn.commit()
