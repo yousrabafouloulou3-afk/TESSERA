@@ -207,6 +207,11 @@ def login_screen():
             conn.close()
 
 def logout():
+    lang = st.session_state.get('language', 'English')
+    night = st.session_state.get('night_mode', False)
+    st.session_state.clear()
+    st.session_state.language = lang
+    st.session_state.night_mode = night
     st.session_state.user = None
     st.rerun()
 
