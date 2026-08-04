@@ -305,8 +305,8 @@ def main():
             nav_page = st.radio(tr("Go to:"), nav_options)
             
             st.divider()
-            if st.button(tr("🚪 Logout"), on_click=logout, type="primary", use_container_width=True):
-                pass
+            if st.button(tr("🚪 Logout"), type="primary", use_container_width=True):
+                logout()
                 
         if nav_page == tr("📊 Dashboard"):
             if role == 'admin':
