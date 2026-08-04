@@ -190,10 +190,30 @@ def init_db():
     
     conn.commit()
     conn.close()
+    seed_default_users()
 
+def seed_default_users():
+    conn = get_db_connection()
+    c = conn.cursor()
+    # Seed or update admin account
+    c.execute("""
+        INSERT INTO Users (username, password, role, linked_id)
+        VALUES ('admin', 'admin123', 'admin', NULL)
+        ON CONFLICT(username) DO UPDATE SET password = 'admin123'
+    """)
+    # Get ID_P for professor Amine if exists
+    c.execute("SELECT ID_P FROM Profs WHERE LOWER(nameP) = 'amine'")
+    prof_row = c.fetchone()
+    amine_linked_id = prof_row['ID_P'] if prof_row else 1
 
-
-
+    # Seed amine account as teacher
+    c.execute("""
+        INSERT INTO Users (username, password, role, linked_id)
+        VALUES ('amine', 'amine123', 'teacher', ?)
+        ON CONFLICT(username) DO UPDATE SET role = 'teacher', password = 'amine123', linked_id = ?
+    """, (amine_linked_id, amine_linked_id))
+    conn.commit()
+    conn.close()
 
 def save_planning_to_db(planning):
     """Saves final planning list of dicts to the db, keeping the session ID stable (id = ID_M)."""
@@ -216,6 +236,7 @@ def clear_table_students():
     c.execute("DELETE FROM Users WHERE role IN ('student', 'delegate')")
     conn.commit()
     conn.close()
+    seed_default_users()
 
 def clear_table_professors():
     conn = get_db_connection()
@@ -224,6 +245,7 @@ def clear_table_professors():
     c.execute("DELETE FROM Users WHERE role = 'teacher'")
     conn.commit()
     conn.close()
+    seed_default_users()
 
 def clear_table_rooms():
     conn = get_db_connection()
