@@ -216,81 +216,69 @@ def main():
             st.session_state.night_mode = night_mode_toggle
             st.rerun()
 
-        sidebar_slot = st.empty()
-        
-        if st.session_state.user is None:
-            sidebar_slot.empty()
-            nav_page = None
-        else:
-            with sidebar_slot.container():
-                st.markdown(f"### {tr('🌐 Portal Navigation')}")
+        if st.session_state.user is not None:
+            st.markdown(f"### {tr('🌐 Portal Navigation')}")
+            
+            role = st.session_state.user['role']
+            pic_path = os.path.join("profile_pics", f"{st.session_state.user['username']}.png")
+            default_path = os.path.join("profile_pics", "default_avatar.svg")
+            
+            import base64
+            img_src = ""
+            if os.path.exists(pic_path):
+                with open(pic_path, "rb") as f:
+                    pic_b64 = base64.b64encode(f.read()).decode("utf-8")
+                img_src = f"data:image/png;base64,{pic_b64}"
+            elif os.path.exists(default_path):
+                with open(default_path, "rb") as f:
+                    pic_b64 = base64.b64encode(f.read()).decode("utf-8")
+                img_src = f"data:image/svg+xml;base64,{pic_b64}"
                 
-                role = st.session_state.user['role']
-                pic_path = os.path.join("profile_pics", f"{st.session_state.user['username']}.png")
-                default_path = os.path.join("profile_pics", "default_avatar.svg")
+            if img_src:
+                st.markdown(
+                    f"""
+                    <div style="text-align: center; margin-bottom: 10px;">
+                        <img src="{img_src}" width="100" height="100" style="border-radius: 50%; object-fit: cover; border: 2px solid #D62F3A; background-color: #f0f0f0;">
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
                 
-                import base64
-                img_src = ""
-                if os.path.exists(pic_path):
-                    with open(pic_path, "rb") as f:
-                        pic_b64 = base64.b64encode(f.read()).decode("utf-8")
-                    img_src = f"data:image/png;base64,{pic_b64}"
-                elif os.path.exists(default_path):
-                    with open(default_path, "rb") as f:
-                        pic_b64 = base64.b64encode(f.read()).decode("utf-8")
-                    img_src = f"data:image/svg+xml;base64,{pic_b64}"
-                    
-                if img_src:
-                    st.markdown(
-                        f"""
-                        <div style="text-align: center; margin-bottom: 10px;">
-                            <img src="{img_src}" width="100" height="100" style="border-radius: 50%; object-fit: cover; border: 2px solid #D62F3A; background-color: #f0f0f0;">
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-                    
-                st.write(f"{tr('Logged in as:')} **{st.session_state.user['username']}**")
+            st.write(f"{tr('Logged in as:')} **{st.session_state.user['username']}**")
+            
+            role_display = tr(role.capitalize())
+            st.caption(f"{tr('Role:')} {role_display}")
+            
+            nav_dashboard = tr("📊 Dashboard")
+            nav_settings = tr("⚙️ Account Settings")
+            nav_faq = tr("❓ Help & FAQ")
+            
+            nav_options = [nav_dashboard, nav_settings]
+            if role != 'student':
+                nav_options.append(nav_faq)
                 
-                role_display = tr(role.capitalize())
-                st.caption(f"{tr('Role:')} {role_display}")
-                
-                nav_dashboard = tr("📊 Dashboard")
-                nav_settings = tr("⚙️ Account Settings")
-                nav_faq = tr("❓ Help & FAQ")
-                
-                nav_options = [nav_dashboard, nav_settings]
-                if role != 'student':
-                    nav_options.append(nav_faq)
-                    
-                nav_page = st.radio(tr("Go to:"), nav_options)
-                
-                st.divider()
-                if st.button(tr("🚪 Logout"), type="primary", use_container_width=True):
-                    logout()
-
-    main_slot = st.empty()
+            nav_page = st.radio(tr("Go to:"), nav_options)
+            
+            st.divider()
+            if st.button(tr("🚪 Logout"), type="primary", use_container_width=True):
+                logout()
 
     if st.session_state.user is None:
-        main_slot.empty()
-        with main_slot.container():
-            login_screen()
+        login_screen()
     else:
         role = st.session_state.user['role']
-        main_slot.empty()
-        with main_slot.container():
-            if nav_page == nav_dashboard:
-                if role == 'admin':
-                    admin.show()
-                elif role == 'teacher':
-                    teacher.show()
-                elif role in ('student', 'delegate'):
-                    student.show()
-            elif nav_page == nav_settings:
-                settings.show()
-            elif nav_page == nav_faq:
-                import views.faq
-                views.faq.show()
+        if nav_page == nav_dashboard:
+            if role == 'admin':
+                admin.show()
+            elif role == 'teacher':
+                teacher.show()
+            elif role in ('student', 'delegate'):
+                student.show()
+        elif nav_page == nav_settings:
+            settings.show()
+        elif nav_page == nav_faq:
+            import views.faq
+            views.faq.show()
 
 if __name__ == "__main__":
     main()
