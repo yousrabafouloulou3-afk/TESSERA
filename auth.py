@@ -224,5 +224,4 @@ def logout():
     st.session_state['logout_ver'] = logout_ver
     st.session_state.user = None
     st.session_state['user'] = None
-    st.rerun()
 
