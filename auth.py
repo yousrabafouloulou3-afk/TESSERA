@@ -20,18 +20,15 @@ def login_screen():
             with open(logo_path, "rb") as f:
                 logo_b64 = base64.b64encode(f.read()).decode("utf-8")
             
-            # Use the white text logo with difference blending to automatically adapt to light/dark backgrounds
             logo_file = os.path.join("assets", "tessera_text_logo_dark_cropped.png")
             fallback_logo_file = os.path.join("assets", "tessera_text_logo_cropped.png")
             
-            # Load text logo if it exists
             text_logo_html = ""
             if os.path.exists(logo_file):
                 with open(logo_file, "rb") as f:
                     text_logo_b64 = base64.b64encode(f.read()).decode("utf-8")
                 text_logo_html = f'<img src="data:image/png;base64,{text_logo_b64}" width="220" style="margin: 15px auto 25px auto; display: block; mix-blend-mode: difference;">'
             elif os.path.exists(fallback_logo_file):
-                # Fallback to light logo (black text) if dark logo is missing
                 with open(fallback_logo_file, "rb") as f:
                     text_logo_b64 = base64.b64encode(f.read()).decode("utf-8")
                 text_logo_html = f'<img src="data:image/png;base64,{text_logo_b64}" width="220" style="margin: 15px auto 25px auto; display: block;">'
@@ -218,5 +215,3 @@ def logout():
     st.session_state.user = None
     st.session_state['user'] = None
     st.session_state['logout_ver'] = st.session_state.get('logout_ver', 0) + 1
-    st.rerun()
-
