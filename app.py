@@ -154,6 +154,9 @@ def main():
 
     init_auth()
 
+    is_logged_in = st.session_state.get('user') is not None
+    nav_page = None  # Will be set in sidebar if logged in
+
     # Global Settings in Sidebar (always visible)
     with st.sidebar:
         logo_path = os.path.join("assets", "tessera_logo.png")
@@ -261,6 +264,9 @@ def main():
 
     if st.session_state.get('user') is None:
         login_screen()
+    elif nav_page is None:
+        # User just logged in on this run — nav_page wasn't set in sidebar yet; rerun to render cleanly
+        st.rerun()
     else:
         role = st.session_state.user['role']
         if nav_page == nav_dashboard:
