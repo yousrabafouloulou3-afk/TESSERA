@@ -256,9 +256,7 @@ def main():
                 
             nav_page = st.radio(tr("Go to:"), nav_options)
             
-            st.divider()
-            if st.button(tr("🚪 Logout"), type="primary", use_container_width=True):
-                logout()
+            st.button(tr("🚪 Logout"), type="primary", use_container_width=True, on_click=logout)
 
     if st.session_state.user is None:
         login_screen()

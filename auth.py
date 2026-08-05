@@ -220,5 +220,4 @@ def logout():
     st.session_state['language'] = lang
     st.session_state['night_mode'] = night
     st.session_state['user'] = None
-    st.rerun()
 
