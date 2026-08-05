@@ -1192,6 +1192,8 @@ def show():
     tab1, tab2, tab3, tab4 = st.tabs([tr("Data Entry"), tr("Approval Dashboard"), tr("AI Engine & Analytics"), tr("Timetables View")])
     
     with tab1:
+        render_academic_settings()
+        st.divider()
         st.markdown(f"## {tr('Administrative Data Entry')}")
         sub_tabs = st.tabs([tr("Students"), tr("Professors"), tr("Rooms"), tr("Modules")])
         with sub_tabs[0]:
