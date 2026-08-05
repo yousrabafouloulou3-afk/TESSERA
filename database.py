@@ -645,9 +645,11 @@ def get_pending_unavailability_requests():
     conn = get_db_connection()
     c = conn.cursor()
     c.execute("""
-        SELECT ur.*, p.nameP 
+        SELECT ur.*, 
+               COALESCE(p.nameP, u.username, 'Prof #' || ur.ID_P) AS nameP
         FROM UnavailabilityRequests ur
-        JOIN Profs p ON ur.ID_P = p.ID_P
+        LEFT JOIN Profs p ON ur.ID_P = p.ID_P
+        LEFT JOIN Users u ON u.linked_id = ur.ID_P AND u.role = 'teacher'
         WHERE ur.status = 'Pending'
     """)
     rows = [dict(r) for r in c.fetchall()]

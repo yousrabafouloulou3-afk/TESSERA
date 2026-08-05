@@ -1681,9 +1681,11 @@ def show():
             conn = get_db_connection()
             c = conn.cursor()
             c.execute("""
-                SELECT u.id, u.t, u.reason, u.status, prof.nameP
+                SELECT u.id, u.t, u.reason, u.status, 
+                       COALESCE(prof.nameP, users.username, 'Prof #' || u.ID_P) AS nameP
                 FROM UnavailabilityRequests u
-                JOIN Profs prof ON u.ID_P = prof.ID_P
+                LEFT JOIN Profs prof ON u.ID_P = prof.ID_P
+                LEFT JOIN Users users ON users.linked_id = u.ID_P AND users.role = 'teacher'
                 ORDER BY u.id DESC
             """)
             all_unavail = c.fetchall()
