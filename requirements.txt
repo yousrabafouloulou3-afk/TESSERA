@@ -4,4 +4,3 @@ numpy
 Pillow
 python-pptx
 plotly
-streamlit-cropper

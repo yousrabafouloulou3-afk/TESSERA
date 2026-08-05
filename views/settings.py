@@ -55,28 +55,22 @@ def show():
                 img = Image.open(uploaded_file)
                 img = ImageOps.exif_transpose(img)
                 
-                cropper_available = False
-                try:
-                    from streamlit_cropper import st_cropper
-                    st.write(tr("Drag and resize the box to crop your picture."))
-                    cropped_img = st_cropper(img, aspect_ratio=(1, 1), box_color='#D62F3A', return_type='image')
-                    cropper_available = True
-                except Exception:
-                    # Fallback if streamlit_cropper fails or is not installed
-                    w, h = img.size
-                    min_dim = min(w, h)
-                    left = (w - min_dim) / 2
-                    top = (h - min_dim) / 2
-                    right = (w + min_dim) / 2
-                    bottom = (h + min_dim) / 2
-                    cropped_img = img.crop((left, top, right, bottom))
-                    st.image(cropped_img, caption=tr("Preview"), width=150)
+                # Auto center-crop to square
+                w, h = img.size
+                min_dim = min(w, h)
+                left = (w - min_dim) / 2
+                top = (h - min_dim) / 2
+                right = (w + min_dim) / 2
+                bottom = (h + min_dim) / 2
+                cropped_img = img.crop((left, top, right, bottom))
+                
+                st.image(cropped_img, caption=tr("Image Preview"), width=150)
                 
                 if st.button(tr("Save Profile Picture"), type="primary"):
                     try:
-                        cropped_img.convert("RGBA")
-                        cropped_img.thumbnail((300, 300))
-                        cropped_img.save(pic_path, "PNG")
+                        save_img = cropped_img.convert("RGBA")
+                        save_img.thumbnail((300, 300))
+                        save_img.save(pic_path, "PNG")
                         st.success(tr("Profile picture updated!"))
                         time.sleep(1)
                         st.rerun()
