@@ -50,7 +50,7 @@ def login_screen():
     else:
         st.markdown(f"<h1 style='text-align: center;'>{tr('Welcome to TESSERA')}</h1><p style='text-align: center; color: gray; letter-spacing: 2px; margin-top: -15px; margin-bottom: 30px;'>SMART SCHEDULING</p>", unsafe_allow_html=True)
     
-    tab1, tab2 = st.tabs([tr("Login"), tr("Sign Up")])
+    tab1, tab2 = st.tabs([tr("Login"), tr("Sign Up")], key="auth_login_tabs")
     
     with tab1:
         with st.container():

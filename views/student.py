@@ -91,7 +91,7 @@ def show():
     else:
         tabs_list = [tr("Timetabling Visualization Canvas"), tr("Global Resource Checker")]
         
-    tabs = st.tabs(tabs_list)
+    tabs = st.tabs(tabs_list, key="student_main_portal_tabs")
     
     with tabs[0]:
         from database import get_preference_submission_stats
