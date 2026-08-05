@@ -267,21 +267,23 @@ def main():
     main_area = st.empty()
 
     if st.session_state.user is None:
+        main_area.empty()
         with main_area.container():
             login_screen()
     else:
         role = st.session_state.user['role']
+        main_area.empty()
         with main_area.container():
-            if nav_page == tr("📊 Dashboard"):
+            if nav_page == nav_dashboard:
                 if role == 'admin':
                     admin.show()
                 elif role == 'teacher':
                     teacher.show()
                 elif role in ('student', 'delegate'):
                     student.show()
-            elif nav_page == tr("⚙️ Account Settings"):
+            elif nav_page == nav_settings:
                 settings.show()
-            elif nav_page == tr("❓ Help & FAQ"):
+            elif nav_page == nav_faq:
                 import views.faq
                 views.faq.show()
 
