@@ -218,12 +218,15 @@ def main():
 
         st.divider()
 
-    main_placeholder = st.empty()
+    auth_container = st.empty()
+    dashboard_container = st.empty()
 
     if st.session_state.user is None:
-        with main_placeholder.container():
+        dashboard_container.empty()
+        with auth_container.container():
             login_screen()
     else:
+        auth_container.empty()
         role = st.session_state.user['role']
         
         # Floating Refresh Button
@@ -311,7 +314,7 @@ def main():
             if st.button(tr("🚪 Logout"), type="primary", use_container_width=True):
                 logout()
                 
-        with main_placeholder.container():
+        with dashboard_container.container():
             if nav_page == tr("📊 Dashboard"):
                 if role == 'admin':
                     admin.show()
