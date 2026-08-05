@@ -217,12 +217,6 @@ def login_screen():
 def logout():
     st.session_state.user = None
     st.session_state['user'] = None
-    logout_ver = st.session_state.get('logout_ver', 0) + 1
-    for k in list(st.session_state.keys()):
-        if k not in ['language', 'night_mode', 'lang_select_key']:
-            del st.session_state[k]
-    st.session_state['logout_ver'] = logout_ver
-    st.session_state.user = None
-    st.session_state['user'] = None
+    st.session_state['logout_ver'] = st.session_state.get('logout_ver', 0) + 1
     st.rerun()
 
