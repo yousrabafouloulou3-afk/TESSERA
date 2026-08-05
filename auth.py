@@ -82,7 +82,6 @@ def login_screen():
                             "linked_id": user_row["linked_id"],
                             "linked_level": user_row["linked_level"]
                         }
-                        st.success(f"{tr('Welcome back, ')}{username}!")
                         st.rerun()
                     else:
                         st.error(tr("Invalid username or password. Please try again."))
