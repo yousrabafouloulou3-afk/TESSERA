@@ -65,8 +65,8 @@ def login_screen():
     if auth_mode == tr("Login"):
         with st.container():
             st.markdown(f"### {tr('Please enter your credentials')}")
-            username = st.text_input(tr("Username"), key="login_username", autocomplete="username")
-            password = st.text_input(tr("Password"), type="password", key="login_password", autocomplete="current-password")
+            username = st.text_input(tr("Username"), key="login_username", autocomplete="off")
+            password = st.text_input(tr("Password"), type="password", key="login_password", autocomplete="new-password")
             
             if st.button(tr("Login"), type="primary", key="login_submit_btn", use_container_width=True):
                 from database import get_db_connection
@@ -214,14 +214,12 @@ def login_screen():
             conn.close()
 
 def logout():
+    st.session_state.user = None
     st.session_state['user'] = None
-    if 'login_username' in st.session_state:
-        del st.session_state['login_username']
-    if 'login_password' in st.session_state:
-        del st.session_state['login_password']
-    if 'signup_username' in st.session_state:
-        del st.session_state['signup_username']
-    if 'signup_password' in st.session_state:
-        del st.session_state['signup_password']
+    for k in list(st.session_state.keys()):
+        if k not in ['language', 'night_mode', 'lang_select_key']:
+            del st.session_state[k]
+    st.session_state.user = None
+    st.session_state['user'] = None
     st.rerun()
 
