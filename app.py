@@ -220,8 +220,10 @@ def main():
 
     auth_container = st.empty()
     dashboard_container = st.empty()
+    sidebar_nav = st.sidebar.empty()
 
     if st.session_state.user is None:
+        sidebar_nav.empty()
         dashboard_container.empty()
         with auth_container.container():
             login_screen()
@@ -268,7 +270,7 @@ def main():
             width=0,
         )
         
-        with st.sidebar:
+        with sidebar_nav.container():
             st.markdown(f"### {tr('🌐 Portal Navigation')}")
             
             pic_path = os.path.join("profile_pics", f"{st.session_state.user['username']}.png")
