@@ -65,29 +65,27 @@ def login_screen():
     if auth_mode == tr("Login"):
         with st.container():
             st.markdown(f"### {tr('Please enter your credentials')}")
-            with st.form("login_form"):
-                username = st.text_input(tr("Username"), key="login_username", autocomplete="username")
-                password = st.text_input(tr("Password"), type="password", key="login_password", autocomplete="current-password")
-                submitted = st.form_submit_button(tr("Login"))
+            username = st.text_input(tr("Username"), key="login_username", autocomplete="username")
+            password = st.text_input(tr("Password"), type="password", key="login_password", autocomplete="current-password")
+            
+            if st.button(tr("Login"), type="primary", key="login_submit_btn", use_container_width=True):
+                from database import get_db_connection
+                conn = get_db_connection()
+                c = conn.cursor()
+                c.execute("SELECT * FROM Users WHERE username=? AND password=?", (username, password))
+                user_row = c.fetchone()
+                conn.close()
                 
-                if submitted:
-                    from database import get_db_connection
-                    conn = get_db_connection()
-                    c = conn.cursor()
-                    c.execute("SELECT * FROM Users WHERE username=? AND password=?", (username, password))
-                    user_row = c.fetchone()
-                    conn.close()
-                    
-                    if user_row:
-                        st.session_state.user = {
-                            "username": user_row["username"],
-                            "role": user_row["role"],
-                            "linked_id": user_row["linked_id"],
-                            "linked_level": user_row["linked_level"]
-                        }
-                        st.rerun()
-                    else:
-                        st.error(tr("Invalid username or password. Please try again."))
+                if user_row:
+                    st.session_state.user = {
+                        "username": user_row["username"],
+                        "role": user_row["role"],
+                        "linked_id": user_row["linked_id"],
+                        "linked_level": user_row["linked_level"]
+                    }
+                    st.rerun()
+                else:
+                    st.error(tr("Invalid username or password. Please try again."))
     else:
         st.markdown(f"### {tr('Create an Account')}")
         role = st.selectbox(tr("I am a:"), ["Student", "Professor", "Administration"], index=None, placeholder=tr("Select your role..."), format_func=tr, key="signup_role_selectbox")
