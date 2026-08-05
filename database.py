@@ -195,23 +195,18 @@ def init_db():
 def seed_default_users():
     conn = get_db_connection()
     c = conn.cursor()
-    # Seed or update admin account
-    c.execute("""
-        INSERT INTO Users (username, password, role, linked_id)
-        VALUES ('admin', 'admin123', 'admin', NULL)
-        ON CONFLICT(username) DO UPDATE SET password = 'admin123'
-    """)
+    # Seed or update admin account (standard SQLite syntax compatible across all versions)
+    c.execute("INSERT OR IGNORE INTO Users (username, password, role, linked_id) VALUES ('admin', 'admin123', 'admin', NULL)")
+    c.execute("UPDATE Users SET password = 'admin123', role = 'admin' WHERE username = 'admin'")
+
     # Get ID_P for professor Amine if exists
     c.execute("SELECT ID_P FROM Profs WHERE LOWER(nameP) = 'amine'")
     prof_row = c.fetchone()
     amine_linked_id = prof_row['ID_P'] if prof_row else 1
 
-    # Seed amine account as teacher
-    c.execute("""
-        INSERT INTO Users (username, password, role, linked_id)
-        VALUES ('amine', 'amine123', 'teacher', ?)
-        ON CONFLICT(username) DO UPDATE SET role = 'teacher', password = 'amine123', linked_id = ?
-    """, (amine_linked_id, amine_linked_id))
+    # Seed or update amine account as teacher
+    c.execute("INSERT OR IGNORE INTO Users (username, password, role, linked_id) VALUES ('amine', 'amine123', 'teacher', ?)", (amine_linked_id,))
+    c.execute("UPDATE Users SET password = 'amine123', role = 'teacher', linked_id = ? WHERE username = 'amine'", (amine_linked_id,))
     conn.commit()
     conn.close()
 

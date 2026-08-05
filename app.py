@@ -218,8 +218,11 @@ def main():
 
         st.divider()
 
+    main_area = st.container()
+
     if st.session_state.user is None:
-        login_screen()
+        with main_area:
+            login_screen()
     else:
         role = st.session_state.user['role']
         
@@ -308,18 +311,19 @@ def main():
             if st.button(tr("🚪 Logout"), type="primary", use_container_width=True):
                 logout()
                 
-        if nav_page == tr("📊 Dashboard"):
-            if role == 'admin':
-                admin.show()
-            elif role == 'teacher':
-                teacher.show()
-            elif role in ('student', 'delegate'):
-                student.show()
-        elif nav_page == tr("⚙️ Account Settings"):
-            settings.show()
-        elif nav_page == tr("❓ Help & FAQ"):
-            import views.faq
-            views.faq.show()
+        with main_area:
+            if nav_page == tr("📊 Dashboard"):
+                if role == 'admin':
+                    admin.show()
+                elif role == 'teacher':
+                    teacher.show()
+                elif role in ('student', 'delegate'):
+                    student.show()
+            elif nav_page == tr("⚙️ Account Settings"):
+                settings.show()
+            elif nav_page == tr("❓ Help & FAQ"):
+                import views.faq
+                views.faq.show()
 
 if __name__ == "__main__":
     main()
