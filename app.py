@@ -216,6 +216,11 @@ def main():
             st.session_state.night_mode = night_mode_toggle
             st.rerun()
 
+        # Render Academic Settings under Global Settings for Admin user
+        if st.session_state.get('user') and st.session_state.user.get('role') == 'admin':
+            st.markdown("<br>", unsafe_allow_html=True)
+            admin.render_academic_settings()
+
         st.divider()
 
     auth_container = st.empty()

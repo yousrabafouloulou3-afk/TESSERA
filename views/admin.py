@@ -1156,43 +1156,42 @@ def show_timetables_view():
                     
     conn.close()
 
+def render_academic_settings():
+    import json
+    import os
+    config_path = "config.json"
+    if os.path.exists(config_path):
+        with open(config_path, "r") as f:
+            config = json.load(f)
+    else:
+        config = {"semester": "2", "college_year": "2025/2026"}
+        
+    st.markdown(f"**📅 {tr('Academic Settings')}**")
+    col_c1, col_c2 = st.columns(2)
+    with col_c1:
+        new_sem = st.selectbox(tr("Semester"), ["1", "2"], index=0 if config.get("semester", "2") == "1" else 1, key="global_sem_selectbox")
+    with col_c2:
+        try:
+            curr_y1 = int(config.get("college_year", "2025/2026").split("/")[0])
+        except:
+            curr_y1 = 2025
+            
+        y1 = st.number_input(tr("Start Year"), min_value=2000, max_value=2099, value=curr_y1, step=1, key="global_start_year_input")
+        st.caption(f"{tr('College year:')} **{y1}/{y1+1}**")
+        new_year = f"{y1}/{y1+1}"
+        
+    if new_sem != config.get("semester") or new_year != config.get("college_year"):
+        config["semester"] = new_sem
+        config["college_year"] = new_year
+        with open(config_path, "w") as f:
+            json.dump(config, f)
+
 def show():
     st.title(tr("Admin Dashboard"))
     
     tab1, tab2, tab3, tab4 = st.tabs([tr("Data Entry"), tr("Approval Dashboard"), tr("AI Engine & Analytics"), tr("Timetables View")])
     
     with tab1:
-        import json
-        import os
-        config_path = "config.json"
-        if os.path.exists(config_path):
-            with open(config_path, "r") as f:
-                config = json.load(f)
-        else:
-            config = {"semester": "2", "college_year": "2025/2026"}
-            
-        st.markdown(f"##### {tr('Global Settings')}")
-        col_c1, col_c2 = st.columns(2)
-        with col_c1:
-            new_sem = st.selectbox(tr("Semester"), ["1", "2"], index=0 if config.get("semester", "2") == "1" else 1, key="global_sem_selectbox")
-        with col_c2:
-            try:
-                curr_y1 = int(config.get("college_year", "2025/2026").split("/")[0])
-            except:
-                curr_y1 = 2025
-                
-            y1 = st.number_input(tr("Start Year"), min_value=2000, max_value=2099, value=curr_y1, step=1, key="global_start_year_input")
-            st.caption(f"{tr('College year:')} **{y1}/{y1+1}**")
-            new_year = f"{y1}/{y1+1}"
-            
-        if new_sem != config.get("semester") or new_year != config.get("college_year"):
-            config["semester"] = new_sem
-            config["college_year"] = new_year
-            with open(config_path, "w") as f:
-                json.dump(config, f)
-                
-        st.divider()
-        
         st.markdown(f"## {tr('Administrative Data Entry')}")
         sub_tabs = st.tabs([tr("Students"), tr("Professors"), tr("Rooms"), tr("Modules")])
         with sub_tabs[0]:
