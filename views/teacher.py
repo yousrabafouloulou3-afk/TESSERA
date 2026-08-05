@@ -25,7 +25,7 @@ def show():
         tr("🔄 Reschedule Sessions"),
         tr("🤝 Session Swaps"),
         tr("🔍 Room Availability")
-    ], key="teacher_main_workspace_tabs")
+    ])
     
     with tab1:
         from database import get_preference_submission_stats

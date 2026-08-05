@@ -1189,13 +1189,13 @@ def render_academic_settings():
 def show():
     st.title(tr("Admin Dashboard"))
     
-    tab1, tab2, tab3, tab4 = st.tabs([tr("Data Entry"), tr("Approval Dashboard"), tr("AI Engine & Analytics"), tr("Timetables View")], key="admin_main_dashboard_tabs")
+    tab1, tab2, tab3, tab4 = st.tabs([tr("Data Entry"), tr("Approval Dashboard"), tr("AI Engine & Analytics"), tr("Timetables View")])
     
     with tab1:
         render_academic_settings()
         st.divider()
         st.markdown(f"## {tr('Administrative Data Entry')}")
-        sub_tabs = st.tabs([tr("Students"), tr("Professors"), tr("Rooms"), tr("Modules")], key="admin_data_entry_subtabs")
+        sub_tabs = st.tabs([tr("Students"), tr("Professors"), tr("Rooms"), tr("Modules")])
         with sub_tabs[0]:
             show_student_data_entry()
             st.write("")
@@ -1241,7 +1241,7 @@ def show():
             tr("🔄 Swap Requests"), 
             tr("🚫 Unavailability Requests"),
             tr("🧹 System Maintenance")
-        ], key="admin_approval_subtabs")
+        ])
 
         # ----------------------------------------------------
         # SUBTAB 1: RESCHEDULE REQUESTS
@@ -1743,7 +1743,7 @@ def show():
             tr("⚙️ Optimization Weights"), 
             tr("🚀 AI Optimization Engine"), 
             tr("📈 Analytics & Quality Metrics")
-        ], key="admin_ai_engine_subtabs")
+        ])
         
         deadline = get_preference_deadline()
         stats = get_preference_submission_stats()
