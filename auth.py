@@ -219,6 +219,5 @@ def logout():
     st.session_state['language'] = lang
     st.session_state['night_mode'] = night
     st.session_state['user'] = None
-    st.markdown("<meta http-equiv='refresh' content='0'>", unsafe_allow_html=True)
     st.rerun()
 

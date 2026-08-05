@@ -1,4 +1,7 @@
 import streamlit as st
+
+st.set_page_config(page_title="TESSERA", page_icon="📅", layout="wide", initial_sidebar_state="expanded")
+
 import os
 import sys
 
@@ -14,19 +17,6 @@ import views.admin as admin
 import views.teacher as teacher
 import views.student as student
 import views.settings as settings
-
-from PIL import Image
-
-# Load custom logo for page icon
-logo_img = "📅"
-logo_path = os.path.join("assets", "tessera_logo.png")
-if os.path.exists(logo_path):
-    try:
-        logo_img = Image.open(logo_path)
-    except Exception:
-        pass
-
-st.set_page_config(page_title="TESSERA", page_icon=logo_img, layout="wide", initial_sidebar_state="expanded")
 
 # Initialise language setting
 if 'language' not in st.session_state:
