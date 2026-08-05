@@ -264,16 +264,12 @@ def main():
             if st.button(tr("🚪 Logout"), type="primary", use_container_width=True):
                 logout()
 
-    main_area = st.empty()
-
     if st.session_state.user is None:
-        main_area.empty()
-        with main_area.container():
+        with st.container(key="auth_login_wrapper"):
             login_screen()
     else:
         role = st.session_state.user['role']
-        main_area.empty()
-        with main_area.container():
+        with st.container(key="portal_dashboard_wrapper"):
             if nav_page == nav_dashboard:
                 if role == 'admin':
                     admin.show()
