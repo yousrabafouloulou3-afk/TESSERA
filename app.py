@@ -190,18 +190,20 @@ def main():
         
         languages_options = ["English", "French"]
         try:
-            current_lang_idx = languages_options.index(st.session_state.language)
+            current_lang_idx = languages_options.index(st.session_state.get('language', 'English'))
         except ValueError:
             current_lang_idx = 0
             
-        selected_lang = st.selectbox(
+        def _on_lang_change():
+            st.session_state.language = st.session_state.lang_select_key
+
+        st.selectbox(
             tr("Language / Langue"), 
             languages_options, 
-            index=current_lang_idx
+            index=current_lang_idx,
+            key="lang_select_key",
+            on_change=_on_lang_change
         )
-        if selected_lang != st.session_state.language:
-            st.session_state.language = selected_lang
-            st.rerun()
             
         st.markdown("<br>", unsafe_allow_html=True)
         # Beautiful Telegram-style Night Mode Toggle
@@ -209,11 +211,7 @@ def main():
         with col1:
             st.markdown(f"**🌙 {tr('Mode Nuit' if st.session_state.language == 'French' else 'Night Mode')}**")
         with col2:
-            night_mode_toggle = st.toggle(" ", value=st.session_state.night_mode, key="night_mode_toggle_ui", label_visibility="collapsed")
-            
-        if night_mode_toggle != st.session_state.night_mode:
-            st.session_state.night_mode = night_mode_toggle
-            st.rerun()
+            st.toggle(" ", key="night_mode", label_visibility="collapsed")
 
         if st.session_state.user is not None:
             st.markdown(f"### {tr('🌐 Portal Navigation')}")
