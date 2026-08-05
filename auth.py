@@ -2,10 +2,13 @@ import streamlit as st
 from translations import tr
 
 def init_auth():
-    if 'user' not in st.session_state:
-        st.session_state.user = None
-    if 'night_mode_visual' not in st.session_state:
-        st.session_state.night_mode_visual = False
+    try:
+        if 'user' not in st.session_state:
+            st.session_state.user = None
+        if 'night_mode_visual' not in st.session_state:
+            st.session_state.night_mode_visual = False
+    except Exception:
+        pass
 
 def login_screen():
     import os

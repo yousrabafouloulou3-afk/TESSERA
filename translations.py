@@ -703,7 +703,10 @@ TRANSLATIONS = {
 }
 
 def tr(text):
-    lang = st.session_state.get('language', 'English')
+    try:
+        lang = st.session_state.get('language', 'English')
+    except Exception:
+        lang = 'English'
     if lang == 'English':
         return text
     translated = TRANSLATIONS.get(lang, {}).get(text, text)
