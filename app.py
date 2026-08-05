@@ -1,6 +1,16 @@
 import streamlit as st
+import os
+from PIL import Image
 
-st.set_page_config(page_title="TESSERA", page_icon="📅", layout="wide", initial_sidebar_state="expanded")
+logo_img = "📅"
+logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "tessera_logo.png")
+if os.path.exists(logo_path):
+    try:
+        logo_img = Image.open(logo_path)
+    except Exception:
+        pass
+
+st.set_page_config(page_title="TESSERA", page_icon=logo_img, layout="wide", initial_sidebar_state="expanded")
 
 import os
 import sys
