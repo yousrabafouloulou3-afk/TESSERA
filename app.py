@@ -28,133 +28,132 @@ import views.teacher as teacher
 import views.student as student
 import views.settings as settings
 
-# Initialise language setting
-if 'language' not in st.session_state:
-    st.session_state.language = 'English'
+def main():
+    # Initialise language setting
+    if 'language' not in st.session_state:
+        st.session_state.language = 'English'
 
-if 'night_mode' not in st.session_state:
-    st.session_state.night_mode = False
+    if 'night_mode' not in st.session_state:
+        st.session_state.night_mode = False
 
-if st.session_state.night_mode:
+    if st.session_state.night_mode:
+        st.markdown("""
+            <style>
+            /* Comprehensive Dark Mode Injection */
+            html, body, .stApp, .stApp > header, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+                background-color: #0e1117 !important;
+                color: #fafafa !important;
+            }
+            [data-testid="stSidebar"], [data-testid="stSidebar"] > div {
+                background-color: #262730 !important;
+            }
+            [data-testid="stSidebar"] * {
+                color: #fafafa !important;
+            }
+            /* Fix ALL Icons (SVGs and Material Font Icons like the password eye and select caret) */
+            svg, svg *, path, [data-baseweb="icon"], [data-baseweb="icon"] *, .material-symbols-rounded, .material-icons, [data-testid="stIconMaterial"] {
+                fill: #fafafa !important;
+                stroke: #fafafa !important;
+                color: #fafafa !important;
+            }
+            /* Force everything inside text inputs and selectboxes to be white (including the eye button) */
+            [data-baseweb="input"] *, [data-baseweb="select"] * {
+                color: #fafafa !important;
+                fill: #fafafa !important;
+            }
+            /* Keep checkbox inner tick visible */
+            [data-baseweb="checkbox"] svg, [data-baseweb="checkbox"] path { 
+                fill: none !important; 
+                stroke: #fafafa !important;
+            }
+            /* Buttons, forms and all clickable elements */
+            .stButton > button, .stDownloadButton > button, .stFormSubmitButton > button {
+                background-color: #262730 !important;
+                color: #ffffff !important;
+                border-color: #4b4b4b !important;
+            }
+            .stButton > button *, .stDownloadButton > button *, .stFormSubmitButton > button * {
+                color: #ffffff !important;
+            }
+            .stButton > button:hover, .stDownloadButton > button:hover, .stFormSubmitButton > button:hover {
+                border-color: #ff4b4b !important;
+                color: #ff4b4b !important;
+            }
+            /* Inputs and dropdowns */
+            div[data-baseweb="select"] > div, input, div[data-baseweb="input"], textarea {
+                background-color: #1e1e1e !important;
+                color: #fafafa !important;
+                border-color: #4b4b4b !important;
+            }
+            /* Dropdown popover list items */
+            div[data-baseweb="popover"] > div, div[data-baseweb="popover"] ul {
+                background-color: #262730 !important;
+            }
+            div[data-baseweb="popover"] * {
+                color: #fafafa !important;
+            }
+            div[data-baseweb="popover"] li:hover {
+                background-color: #4b4b4b !important;
+            }
+            /* Dataframes */
+            [data-testid="stDataFrame"], [data-testid="stDataFrame"] * {
+                background-color: #1e1e1e !important;
+                color: #fafafa !important;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+
+    # Inject minimal modern CSS
     st.markdown("""
         <style>
-        /* Comprehensive Dark Mode Injection */
-        html, body, .stApp, .stApp > header, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-            background-color: #0e1117 !important;
-            color: #fafafa !important;
+        .stAppDeployButton {display:none !important;}
+        .stApp {
+            background-color: transparent;
         }
-        [data-testid="stSidebar"], [data-testid="stSidebar"] > div {
-            background-color: #262730 !important;
+        .main-header {
+            font-family: 'Inter', sans-serif;
+            color: #2b2b2b;
         }
-        [data-testid="stSidebar"] * {
-            color: #fafafa !important;
+        
+        /* Modern 'Mosaic' Tabs (Red Aesthetic) */
+        [data-testid="stTabs"] [data-baseweb="tab-list"] {
+            gap: 2px;
+            background-color: transparent;
+            padding-bottom: 0px;
         }
-        /* Fix ALL Icons (SVGs and Material Font Icons like the password eye and select caret) */
-        svg, svg *, path, [data-baseweb="icon"], [data-baseweb="icon"] *, .material-symbols-rounded, .material-icons, [data-testid="stIconMaterial"] {
-            fill: #fafafa !important;
-            stroke: #fafafa !important;
-            color: #fafafa !important;
+        [data-testid="stTabs"] [data-baseweb="tab"] {
+            background-color: rgba(128, 128, 128, 0.05) !important;
+            border: none !important;
+            border-radius: 0 !important;
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+            margin-left: -10px;
+            padding: 10px 25px !important;
+            transition: all 0.3s ease;
         }
-        /* Force everything inside text inputs and selectboxes to be white (including the eye button) */
-        [data-baseweb="input"] *, [data-baseweb="select"] * {
-            color: #fafafa !important;
-            fill: #fafafa !important;
+        [data-testid="stTabs"] [data-baseweb="tab"]:first-child {
+            clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%);
+            margin-left: 0;
         }
-        /* Keep checkbox inner tick visible */
-        [data-baseweb="checkbox"] svg, [data-baseweb="checkbox"] path { 
-            fill: none !important; 
-            stroke: #fafafa !important;
+        [data-testid="stTabs"] [data-baseweb="tab"]:hover {
+            background-color: rgba(128, 128, 128, 0.1) !important;
         }
-        /* Buttons, forms and all clickable elements */
-        .stButton > button, .stDownloadButton > button, .stFormSubmitButton > button {
-            background-color: #262730 !important;
-            color: #ffffff !important;
-            border-color: #4b4b4b !important;
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
+            background-color: rgba(214, 47, 58, 0.1) !important;
+            border-bottom: 3px solid #D62F3A !important;
+            box-shadow: inset 0 -10px 20px -10px rgba(214, 47, 58, 0.4);
         }
-        .stButton > button *, .stDownloadButton > button *, .stFormSubmitButton > button * {
-            color: #ffffff !important;
-        }
-        .stButton > button:hover, .stDownloadButton > button:hover, .stFormSubmitButton > button:hover {
-            border-color: #ff4b4b !important;
-            color: #ff4b4b !important;
-        }
-        /* Inputs and dropdowns */
-        div[data-baseweb="select"] > div, input, div[data-baseweb="input"], textarea {
-            background-color: #1e1e1e !important;
-            color: #fafafa !important;
-            border-color: #4b4b4b !important;
-        }
-        /* Dropdown popover list items */
-        div[data-baseweb="popover"] > div, div[data-baseweb="popover"] ul {
-            background-color: #262730 !important;
-        }
-        div[data-baseweb="popover"] * {
-            color: #fafafa !important;
-        }
-        div[data-baseweb="popover"] li:hover {
-            background-color: #4b4b4b !important;
-        }
-        /* Dataframes */
-        [data-testid="stDataFrame"], [data-testid="stDataFrame"] * {
-            background-color: #1e1e1e !important;
-            color: #fafafa !important;
-        }
+        /* Hide Streamlit Default Menu and Footer */
+        footer {visibility: hidden !important;}
         </style>
     """, unsafe_allow_html=True)
 
+    try:
+        init_db()
+    except Exception as e:
+        st.error(f"Database initialization error: {e}")
 
-# Inject minimal modern CSS
-st.markdown("""
-    <style>
-    .stAppDeployButton {display:none !important;}
-    .stApp {
-        background-color: transparent;
-    }
-    .main-header {
-        font-family: 'Inter', sans-serif;
-        color: #2b2b2b;
-    }
-    
-    /* Modern 'Mosaic' Tabs (Red Aesthetic) */
-    [data-testid="stTabs"] [data-baseweb="tab-list"] {
-        gap: 2px;
-        background-color: transparent;
-        padding-bottom: 0px;
-    }
-    [data-testid="stTabs"] [data-baseweb="tab"] {
-        background-color: rgba(128, 128, 128, 0.05) !important;
-        border: none !important;
-        border-radius: 0 !important;
-        clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
-        margin-left: -10px;
-        padding: 10px 25px !important;
-        transition: all 0.3s ease;
-    }
-    [data-testid="stTabs"] [data-baseweb="tab"]:first-child {
-        clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%);
-        margin-left: 0;
-    }
-    [data-testid="stTabs"] [data-baseweb="tab"]:hover {
-        background-color: rgba(128, 128, 128, 0.1) !important;
-    }
-    [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
-        background-color: rgba(214, 47, 58, 0.1) !important;
-        border-bottom: 3px solid #D62F3A !important;
-        box-shadow: inset 0 -10px 20px -10px rgba(214, 47, 58, 0.4);
-    }
-    /* Hide Streamlit Default Menu and Footer */
-    footer {visibility: hidden !important;}
-    </style>
-""", unsafe_allow_html=True)
+    init_auth()
 
-try:
-    init_db()
-except Exception as e:
-    st.error(f"Database initialization error: {e}")
-
-init_auth()
-
-def main():
     # Global Settings in Sidebar (always visible)
     with st.sidebar:
         logo_path = os.path.join("assets", "tessera_logo.png")
