@@ -236,45 +236,6 @@ def main():
         auth_container.empty()
         role = st.session_state.user['role']
         
-        # Floating Refresh Button
-        import streamlit.components.v1 as components
-        if st.button("🔄", key="global_refresh_btn", help=tr("Refresh App")):
-            st.rerun()
-            
-        components.html(
-            """
-            <script>
-            const parent = window.parent.document;
-            
-            function lockRefreshButton() {
-                const buttons = parent.querySelectorAll('button');
-                buttons.forEach(b => {
-                    if(b.innerText.trim() === '🔄') {
-                        const container = b.closest('div[data-testid="stButton"]');
-                        if(container && container.style.position !== 'fixed') {
-                            container.style.position = 'fixed';
-                            container.style.top = '8px';
-                            container.style.right = '60px';
-                            container.style.zIndex = '999999';
-                            container.style.width = 'auto';
-                            b.style.background = 'transparent';
-                            b.style.border = 'none';
-                            b.style.boxShadow = 'none';
-                            b.style.padding = '0';
-                            b.style.fontSize = '1.2rem';
-                        }
-                    }
-                });
-            }
-            
-            lockRefreshButton();
-            setInterval(lockRefreshButton, 100);
-            </script>
-            """,
-            height=0,
-            width=0,
-        )
-        
         with sidebar_nav.container():
             st.markdown(f"### {tr('🌐 Portal Navigation')}")
             
