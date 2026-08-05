@@ -218,10 +218,10 @@ def main():
 
         st.divider()
 
-    main_area = st.container()
+    main_placeholder = st.empty()
 
     if st.session_state.user is None:
-        with main_area:
+        with main_placeholder.container():
             login_screen()
     else:
         role = st.session_state.user['role']
@@ -311,7 +311,7 @@ def main():
             if st.button(tr("🚪 Logout"), type="primary", use_container_width=True):
                 logout()
                 
-        with main_area:
+        with main_placeholder.container():
             if nav_page == tr("📊 Dashboard"):
                 if role == 'admin':
                     admin.show()
