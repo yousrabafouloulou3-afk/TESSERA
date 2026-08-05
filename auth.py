@@ -50,9 +50,16 @@ def login_screen():
     else:
         st.markdown(f"<h1 style='text-align: center;'>{tr('Welcome to TESSERA')}</h1><p style='text-align: center; color: gray; letter-spacing: 2px; margin-top: -15px; margin-bottom: 30px;'>SMART SCHEDULING</p>", unsafe_allow_html=True)
     
-    tab1, tab2 = st.tabs([tr("Login"), tr("Sign Up")])
+    auth_mode = st.radio(
+        "auth_mode_selector",
+        [tr("Login"), tr("Sign Up")],
+        horizontal=True,
+        label_visibility="collapsed",
+        key="auth_mode_selector_radio"
+    )
+    st.write("")
     
-    with tab1:
+    if auth_mode == tr("Login"):
         with st.container():
             st.markdown(f"### {tr('Please enter your credentials')}")
             with st.form("login_form"):
@@ -79,7 +86,7 @@ def login_screen():
                         st.rerun()
                     else:
                         st.error(tr("Invalid username or password. Please try again."))
-    with tab2:
+    else:
         st.markdown(f"### {tr('Create an Account')}")
         role = st.selectbox(tr("I am a:"), ["Student", "Professor", "Administration"], index=None, placeholder=tr("Select your role..."), format_func=tr, key="signup_role_selectbox")
         if role:
