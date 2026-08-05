@@ -83,8 +83,6 @@ def login_screen():
                         "linked_id": user_row["linked_id"],
                         "linked_level": user_row["linked_level"]
                     }
-                    st.session_state['login_username'] = ""
-                    st.session_state['login_password'] = ""
                     st.rerun()
                 else:
                     st.error(tr("Invalid username or password. Please try again."))
@@ -217,11 +215,13 @@ def login_screen():
 
 def logout():
     st.session_state['user'] = None
-    st.session_state['login_username'] = ""
-    st.session_state['login_password'] = ""
+    if 'login_username' in st.session_state:
+        del st.session_state['login_username']
+    if 'login_password' in st.session_state:
+        del st.session_state['login_password']
     if 'signup_username' in st.session_state:
-        st.session_state['signup_username'] = ""
+        del st.session_state['signup_username']
     if 'signup_password' in st.session_state:
-        st.session_state['signup_password'] = ""
+        del st.session_state['signup_password']
     st.rerun()
 
