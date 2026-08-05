@@ -216,29 +216,11 @@ def main():
             st.session_state.night_mode = night_mode_toggle
             st.rerun()
 
-        # Render Academic Settings under Global Settings for Admin user
-        if st.session_state.get('user') and st.session_state.user.get('role') == 'admin':
-            st.markdown("<br>", unsafe_allow_html=True)
-            admin.render_academic_settings()
-
-        st.divider()
-
-    auth_container = st.empty()
-    dashboard_container = st.empty()
-    sidebar_nav = st.sidebar.empty()
-
-    if st.session_state.user is None:
-        sidebar_nav.empty()
-        dashboard_container.empty()
-        with auth_container.container():
-            login_screen()
-    else:
-        auth_container.empty()
-        role = st.session_state.user['role']
-        
-        with sidebar_nav.container():
+        # Render Portal Navigation inside sidebar ONLY if logged in
+        if st.session_state.user is not None:
             st.markdown(f"### {tr('🌐 Portal Navigation')}")
             
+            role = st.session_state.user['role']
             pic_path = os.path.join("profile_pics", f"{st.session_state.user['username']}.png")
             default_path = os.path.join("profile_pics", "default_avatar.svg")
             
@@ -281,20 +263,23 @@ def main():
             st.divider()
             if st.button(tr("🚪 Logout"), type="primary", use_container_width=True):
                 logout()
-                
-        with dashboard_container.container():
-            if nav_page == tr("📊 Dashboard"):
-                if role == 'admin':
-                    admin.show()
-                elif role == 'teacher':
-                    teacher.show()
-                elif role in ('student', 'delegate'):
-                    student.show()
-            elif nav_page == tr("⚙️ Account Settings"):
-                settings.show()
-            elif nav_page == tr("❓ Help & FAQ"):
-                import views.faq
-                views.faq.show()
+
+    if st.session_state.user is None:
+        login_screen()
+    else:
+        role = st.session_state.user['role']
+        if nav_page == tr("📊 Dashboard"):
+            if role == 'admin':
+                admin.show()
+            elif role == 'teacher':
+                teacher.show()
+            elif role in ('student', 'delegate'):
+                student.show()
+        elif nav_page == tr("⚙️ Account Settings"):
+            settings.show()
+        elif nav_page == tr("❓ Help & FAQ"):
+            import views.faq
+            views.faq.show()
 
 if __name__ == "__main__":
     main()
