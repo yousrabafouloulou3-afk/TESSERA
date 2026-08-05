@@ -213,7 +213,7 @@ def main():
         with col2:
             st.toggle(" ", key="night_mode", label_visibility="collapsed")
 
-        if st.session_state.user is not None:
+        if st.session_state.get('user') is not None:
             st.markdown(f"### {tr('🌐 Portal Navigation')}")
             
             role = st.session_state.user['role']
@@ -256,9 +256,11 @@ def main():
                 
             nav_page = st.radio(tr("Go to:"), nav_options)
             
-            st.button(tr("🚪 Logout"), type="primary", use_container_width=True, on_click=logout)
+            st.divider()
+            if st.button(tr("🚪 Logout"), type="primary", use_container_width=True, key="sidebar_logout_btn"):
+                logout()
 
-    if st.session_state.user is None:
+    if st.session_state.get('user') is None:
         login_screen()
     else:
         role = st.session_state.user['role']
