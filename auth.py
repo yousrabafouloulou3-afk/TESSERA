@@ -207,11 +207,9 @@ def login_screen():
             conn.close()
 
 def logout():
-    lang = st.session_state.get('language', 'English')
-    night = st.session_state.get('night_mode', False)
-    st.session_state.clear()
-    st.session_state.language = lang
-    st.session_state.night_mode = night
-    st.session_state.user = None
+    st.session_state['user'] = None
+    for k in list(st.session_state.keys()):
+        if k not in ['language', 'night_mode', 'user']:
+            del st.session_state[k]
     st.rerun()
 
