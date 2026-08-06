@@ -20,6 +20,31 @@ import psycopg2.extras
 _OR_IGNORE_RE  = re.compile(r'\bINSERT\s+OR\s+IGNORE\b', re.IGNORECASE)
 
 
+class _CIDict(dict):
+    """Case-insensitive dict: row['ID_E'], row['id_e'], row['Username'] all work."""
+    def __getitem__(self, key):
+        try:
+            return super().__getitem__(key)
+        except KeyError:
+            key_lower = key.lower()
+            for k, v in self.items():
+                if k.lower() == key_lower:
+                    return v
+            raise
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def __contains__(self, key):
+        try:
+            self[key]
+            return True
+        except KeyError:
+            return False
+
 class _CompatCursor:
     """Wraps psycopg2 RealDictCursor to transparently accept sqlite3-style SQL."""
 
@@ -45,15 +70,14 @@ class _CompatCursor:
         row = self._cur.fetchone()
         if row is None:
             return None
-        # Convert keys to upper case to match original SQLite style (e.g., ID_E)
-        return {k.upper(): v for k, v in dict(row).items()}
+        return _CIDict(row)
 
     def fetchall(self):
-        return [{k.upper(): v for k, v in dict(r).items()} for r in self._cur.fetchall()]
+        return [_CIDict(r) for r in self._cur.fetchall()]
 
     def __iter__(self):
         for row in self._cur:
-            yield {k.upper(): v for k, v in dict(row).items()}
+            yield _CIDict(row)
 
 
 class _CompatConn:
