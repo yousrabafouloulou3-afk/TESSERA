@@ -51,19 +51,16 @@ def main():
     # Inject layout & header removal CSS
     st.markdown("""
         <style>
-        /* Completely hide top right header toolbar (Fork, GitHub link, 3 dots menu) in Streamlit 1.61+ */
-        header[data-testid="stHeader"],
-        [data-testid="stHeader"],
-        .stAppHeader,
-        [data-testid="stHeaderActionElements"],
+        /* Hide ONLY top-right buttons (Fork, GitHub link, 3 dots menu), keeping left sidebar toggle button visible */
+        .stAppDeployButton,
         [data-testid="stToolbar"],
-        .stAppDeployButton {
+        [data-testid="stHeader"] a[href*="github"],
+        button[data-testid="stHeaderOverflowButton"] {
             display: none !important;
-            height: 0 !important;
-            min-height: 0 !important;
             visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
+        }
+        [data-testid="stHeader"] {
+            background: transparent !important;
         }
         footer {
             visibility: hidden !important;
@@ -76,39 +73,39 @@ def main():
             font-family: 'Inter', sans-serif;
         }
         
-        /* Modern 'Mosaic' Tabs (Red Aesthetic for Sections) */
+        /* Modern 'Mosaic' Tabs (Angled Parallelogram Red Aesthetic for Sections) */
         [data-testid="stTabs"] [data-baseweb="tab-list"] {
-            gap: 2px !important;
+            gap: 6px !important;
             background-color: transparent !important;
-            padding-bottom: 0px !important;
-            border-bottom: none !important;
+            padding-bottom: 2px !important;
+            border-bottom: 2px solid rgba(214, 47, 58, 0.3) !important;
         }
         [data-testid="stTabs"] [data-baseweb="tab"] {
             background-color: rgba(128, 128, 128, 0.12) !important;
-            border: none !important;
-            border-radius: 0 !important;
-            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
-            margin-left: -10px !important;
-            padding: 10px 25px !important;
-            transition: all 0.3s ease !important;
+            border: 1px solid rgba(128, 128, 128, 0.2) !important;
+            border-bottom: none !important;
+            border-radius: 6px 6px 0 0 !important;
+            transform: skewX(-12deg) !important;
+            margin-right: 4px !important;
+            padding: 8px 22px !important;
+            transition: all 0.2s ease !important;
         }
-        [data-testid="stTabs"] [data-baseweb="tab"]:first-child {
-            clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%) !important;
-            margin-left: 0 !important;
+        [data-testid="stTabs"] [data-baseweb="tab"] * {
+            transform: skewX(12deg) !important;
+            color: #a0a5b5 !important;
         }
         [data-testid="stTabs"] [data-baseweb="tab"]:hover {
-            background-color: rgba(214, 47, 58, 0.2) !important;
+            background-color: rgba(214, 47, 58, 0.15) !important;
+            border-color: rgba(214, 47, 58, 0.4) !important;
         }
         [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
-            background-color: rgba(214, 47, 58, 0.25) !important;
-            border-bottom: 3px solid #D62F3A !important;
-            box-shadow: inset 0 -10px 20px -10px rgba(214, 47, 58, 0.5) !important;
+            background-color: #D62F3A !important;
+            border-color: #D62F3A !important;
+            box-shadow: 0 4px 12px rgba(214, 47, 58, 0.4) !important;
         }
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] *,
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] p,
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] span {
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] * {
             color: #ffffff !important;
-            font-weight: 600 !important;
+            font-weight: 700 !important;
         }
         </style>
     """, unsafe_allow_html=True)
