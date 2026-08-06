@@ -33,7 +33,75 @@ def main():
     if 'language' not in st.session_state:
         st.session_state.language = 'English'
 
+    # Inject a persistent red ">>" overlay button that appears when the sidebar is collapsed.
+    # components.html runs in a same-origin iframe on Streamlit Cloud, so window.parent.document works.
+    import streamlit.components.v1 as components
+    components.html("""
+        <script>
+        (function() {
+            var doc;
+            try { doc = window.parent.document; var _t = doc.body; }
+            catch(e) { return; }  // cross-origin guard
 
+            // Idempotent: reuse button if already exists (Streamlit reruns this on every rerender)
+            var btn = doc.getElementById('__tessera_sb__');
+            if (!btn) {
+                btn = doc.createElement('button');
+                btn.id = '__tessera_sb__';
+                btn.innerHTML = '&#x276F;&#x276F;';
+                btn.title = 'Open sidebar';
+                Object.assign(btn.style, {
+                    position:'fixed', top:'12px', left:'12px',
+                    zIndex:'9999999', background:'#D62F3A', color:'#fff',
+                    border:'none', borderRadius:'8px', padding:'6px 12px',
+                    fontSize:'15px', fontWeight:'bold', cursor:'pointer',
+                    boxShadow:'0 4px 12px rgba(214,47,58,0.5)',
+                    lineHeight:'1.2', display:'none',
+                    alignItems:'center', justifyContent:'center'
+                });
+                btn.addEventListener('click', function() {
+                    var sels = [
+                        '[data-testid="stSidebarCollapseButton"] button',
+                        '[data-testid="stSidebarCollapsedControl"] button',
+                        '[data-testid="collapsedControl"] button',
+                        'button[aria-label="Open sidebar"]',
+                        'button[aria-label="open sidebar"]',
+                        'button[aria-label*="sidebar"]',
+                        'button[aria-label*="Sidebar"]'
+                    ];
+                    for (var i = 0; i < sels.length; i++) {
+                        var target = doc.querySelector(sels[i]);
+                        if (target) { target.click(); return; }
+                    }
+                });
+                doc.body.appendChild(btn);
+            }
+
+            function isCollapsed() {
+                var sb = doc.querySelector('section[data-testid="stSidebar"]');
+                if (!sb) return false;
+                if (sb.getAttribute('aria-expanded') === 'false') return true;
+                var r = sb.getBoundingClientRect();
+                return r.width < 30 || r.left < -60;
+            }
+
+            function sync() {
+                btn.style.display = isCollapsed() ? 'flex' : 'none';
+            }
+
+            sync();
+
+            // One-time observer (persists across Streamlit rerenders)
+            if (!doc.__tessera_observer__) {
+                doc.__tessera_observer__ = new MutationObserver(sync);
+                doc.__tessera_observer__.observe(doc.body, {
+                    attributes: true, subtree: true, childList: true,
+                    attributeFilter: ['aria-expanded', 'style', 'class']
+                });
+            }
+        })();
+        </script>
+    """, height=0)
 
     # Inject layout & header removal CSS
     st.markdown("""
@@ -45,49 +113,7 @@ def main():
         }
 
 
-        /* ── Sidebar Expand button (>>) ── */
-        /* Only target the EXPAND control (shown when sidebar is collapsed), NOT the collapse button */
-        [data-testid="stSidebarCollapsedControl"],
-        [data-testid="collapsedControl"],
-        div[data-testid="stSidebarCollapsedControl"],
-        div[data-testid="collapsedControl"] {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            position: fixed !important;
-            top: 10px !important;
-            left: 10px !important;
-            z-index: 9999999 !important;
-            pointer-events: auto !important;
-        }
-
-        [data-testid="stSidebarCollapsedControl"] button,
-        [data-testid="collapsedControl"] button {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            background-color: #D62F3A !important;
-            color: #ffffff !important;
-            border: none !important;
-            border-radius: 8px !important;
-            padding: 6px 12px !important;
-            font-size: 15px !important;
-            font-weight: bold !important;
-            cursor: pointer !important;
-            box-shadow: 0 4px 12px rgba(214,47,58,0.5) !important;
-            pointer-events: auto !important;
-        }
-
-        [data-testid="stSidebarCollapsedControl"] button svg,
-        [data-testid="stSidebarCollapsedControl"] button path,
-        [data-testid="collapsedControl"] button svg,
-        [data-testid="collapsedControl"] button path {
-            fill: #ffffff !important;
-            stroke: #ffffff !important;
-            color: #ffffff !important;
-        }
-
-        /* Ensure sidebar is always shown when expanded (not translated off) */
+        /* Ensure sidebar stays visible when expanded */
         section[data-testid="stSidebar"][aria-expanded="true"] {
             display: flex !important;
             visibility: visible !important;
