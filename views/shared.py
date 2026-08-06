@@ -339,8 +339,11 @@ def render_schedule_grid(planning_list, title="Schedule", pdf_title=None, hide_g
                             pdf.set_xy(x + 1, current_y + 0.5)
                             pdf.multi_cell(col_w - 2, text_h - 1, "", border=0, align="C", fill=True)
                             
+                            # Safely encode text: normalize accented chars to ASCII-compatible equivalents
+                            import unicodedata
+                            safe_item = unicodedata.normalize('NFKD', item).encode('latin-1', 'replace').decode('latin-1')
                             pdf.set_xy(x, current_y)
-                            pdf.multi_cell(col_w, line_h, item.encode('latin-1', 'replace').decode('latin-1'), border=0, align="C")
+                            pdf.multi_cell(col_w, line_h, safe_item, border=0, align="C")
                             
                             current_y += text_h + (line_h / 2)
                             

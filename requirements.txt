@@ -4,3 +4,4 @@ numpy
 Pillow
 python-pptx
 plotly
+fpdf2
