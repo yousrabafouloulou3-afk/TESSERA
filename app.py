@@ -156,7 +156,7 @@ def main():
         /* Individual tabs — angled polygon shape */
         [data-testid="stTabs"] [role="tab"],
         [data-testid="stTabs"] [data-baseweb="tab"] {
-            background-color: rgba(128, 128, 128, 0.15) !important;
+            background-color: rgba(214, 47, 58, 0.08) !important;
             border: none !important;
             border-radius: 0 !important;
             clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%) !important;
@@ -184,7 +184,7 @@ def main():
         /* Active / selected tab */
         [data-testid="stTabs"] [role="tab"][aria-selected="true"],
         [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
-            background-color: rgba(214, 47, 58, 0.35) !important;
+            background-color: #D62F3A !important;
             border-bottom: 3px solid #D62F3A !important;
             box-shadow: inset 0 -10px 20px -10px rgba(214, 47, 58, 0.6) !important;
         }
