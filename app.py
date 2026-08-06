@@ -141,79 +141,60 @@ def main():
         }
         
         /* ══════════════════════════════════════════════════════
-           RED MOSAIC TABS — targets div[role="tab"] (Streamlit 1.56+)
+           RED MOSAIC TABS — Polygon Angled Mosaic Aesthetic
            ══════════════════════════════════════════════════════ */
 
-        /* Tab list bar */
+        /* Tab list bar — no gap, overlapping mosaic */
         [data-testid="stTabs"] [data-baseweb="tab-list"],
-        div[data-testid="stTabs"] div[data-baseweb="tab-list"],
-        .stTabs [data-baseweb="tab-list"] {
-            gap: 6px !important;
+        div[data-testid="stTabs"] div[data-baseweb="tab-list"] {
+            gap: 2px !important;
             background-color: transparent !important;
-            padding-bottom: 2px !important;
-            border-bottom: 2px solid rgba(214, 47, 58, 0.4) !important;
-            flex-wrap: wrap !important;
+            padding-bottom: 0px !important;
+            border-bottom: none !important;
         }
 
-        /* Individual tab sections — inactive state */
+        /* Individual tabs — angled polygon shape */
         [data-testid="stTabs"] [role="tab"],
-        [data-testid="stTabs"] [data-baseweb="tab"],
-        .stTabs [role="tab"] {
-            background-color: rgba(214, 47, 58, 0.08) !important;
-            border: 1px solid rgba(214, 47, 58, 0.3) !important;
-            border-bottom: none !important;
-            border-radius: 6px 6px 0 0 !important;
-            margin-right: 4px !important;
-            padding: 8px 20px !important;
-            transition: all 0.2s ease-in-out !important;
-            color: #c0c5d0 !important;
+        [data-testid="stTabs"] [data-baseweb="tab"] {
+            background-color: rgba(128, 128, 128, 0.15) !important;
+            border: none !important;
+            border-radius: 0 !important;
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%) !important;
+            -webkit-clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%) !important;
+            margin-left: -8px !important;
+            padding: 10px 24px !important;
+            transition: all 0.2s ease !important;
             cursor: pointer !important;
         }
 
-        /* Tab section text — inactive */
-        [data-testid="stTabs"] [role="tab"] p,
-        [data-testid="stTabs"] [role="tab"] span,
-        [data-testid="stTabs"] [role="tab"] *,
-        [data-testid="stTabs"] [data-baseweb="tab"] * {
-            color: #a0a5b5 !important;
+        /* First tab — flat left edge */
+        [data-testid="stTabs"] [role="tab"]:first-child,
+        [data-testid="stTabs"] [data-baseweb="tab"]:first-child {
+            clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%) !important;
+            -webkit-clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%) !important;
+            margin-left: 0 !important;
         }
 
         /* Hover */
         [data-testid="stTabs"] [role="tab"]:hover,
         [data-testid="stTabs"] [data-baseweb="tab"]:hover {
-            background-color: rgba(214, 47, 58, 0.2) !important;
-            border-color: rgba(214, 47, 58, 0.6) !important;
-            color: #ffffff !important;
-        }
-        [data-testid="stTabs"] [role="tab"]:hover *,
-        [data-testid="stTabs"] [data-baseweb="tab"]:hover * {
-            color: #ffffff !important;
+            background-color: rgba(214, 47, 58, 0.25) !important;
         }
 
-        /* Active / selected tab section */
+        /* Active / selected tab */
         [data-testid="stTabs"] [role="tab"][aria-selected="true"],
         [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
-            background-color: #D62F3A !important;
-            border-color: #D62F3A !important;
-            box-shadow: 0 4px 16px rgba(214, 47, 58, 0.55) !important;
-            color: #ffffff !important;
+            background-color: rgba(214, 47, 58, 0.35) !important;
+            border-bottom: 3px solid #D62F3A !important;
+            box-shadow: inset 0 -10px 20px -10px rgba(214, 47, 58, 0.6) !important;
         }
 
-        /* Active tab section text */
+        /* Active tab text */
         [data-testid="stTabs"] [role="tab"][aria-selected="true"] *,
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] *,
-        [data-testid="stTabs"] [role="tab"][aria-selected="true"] p,
-        [data-testid="stTabs"] [role="tab"][aria-selected="true"] span {
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] p,
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] span {
             color: #ffffff !important;
             font-weight: 700 !important;
-        }
-
-        /* Tab panel (content area) — subtle red left border */
-        [data-testid="stTabsTabPanel"],
-        div[data-testid="stTabsTabPanel"] {
-            border-left: 3px solid rgba(214, 47, 58, 0.25) !important;
-            padding-left: 12px !important;
-            margin-top: 4px !important;
         }
 
         </style>
