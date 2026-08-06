@@ -51,16 +51,28 @@ def main():
     # Inject layout & header removal CSS
     st.markdown("""
         <style>
-        /* Hide ONLY top-right buttons (Fork, GitHub link, 3 dots menu), keeping left sidebar toggle button visible */
+        /* Transparent Header & Visible Sidebar Collapse/Expand Button */
+        [data-testid="stHeader"] {
+            background-color: transparent !important;
+            background: transparent !important;
+        }
+        [data-testid="stSidebarCollapsedControl"], 
+        button[aria-label*="sidebar"],
+        button[aria-label*="Sidebar"] {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            color: #ffffff !important;
+            z-index: 999999 !important;
+        }
+
+        /* Hide ONLY top-right buttons (Fork, GitHub link, 3 dots menu) */
         .stAppDeployButton,
         [data-testid="stToolbar"],
         [data-testid="stHeader"] a[href*="github"],
         button[data-testid="stHeaderOverflowButton"] {
             display: none !important;
             visibility: hidden !important;
-        }
-        [data-testid="stHeader"] {
-            background: transparent !important;
         }
         footer {
             visibility: hidden !important;
@@ -73,49 +85,51 @@ def main():
             font-family: 'Inter', sans-serif;
         }
         
-        /* Ensure left sidebar container is always visible */
-        [data-testid="stSidebar"], section[data-testid="stSidebar"] {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
+        /* Allow tabs overflow so polygon/skew shapes are never clipped */
+        [data-testid="stTabs"], 
+        [data-testid="stTabs"] > div, 
+        [data-baseweb="tab-list"], 
+        [data-baseweb="tab-highlight"],
+        [data-baseweb="tab-border"] {
+            overflow: visible !important;
         }
 
-        /* Modern Red Mosaic Tabs Styling (Polygon Angled Mosaic Aesthetic) */
+        /* Modern Red Mosaic Tabs Styling (Angled Parallelogram Tabs) */
         [data-testid="stTabs"] [data-baseweb="tab-list"] {
-            gap: 2px !important;
+            gap: 8px !important;
             background-color: transparent !important;
-            padding-bottom: 0px !important;
-            border-bottom: none !important;
+            padding-bottom: 4px !important;
+            border-bottom: 2px solid rgba(214, 47, 58, 0.4) !important;
         }
-        [data-testid="stTabs"] button[role="tab"],
+        [data-testid="stTabs"] button[role="tab"], 
         [data-testid="stTabs"] [data-baseweb="tab"] {
             background-color: rgba(128, 128, 128, 0.15) !important;
-            border: none !important;
-            border-radius: 0 !important;
-            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%) !important;
-            -webkit-clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%) !important;
-            margin-left: -8px !important;
-            padding: 10px 24px !important;
-            transition: all 0.2s ease !important;
+            border: 1px solid rgba(128, 128, 128, 0.3) !important;
+            border-bottom: none !important;
+            border-radius: 6px 6px 0 0 !important;
+            transform: skewX(-15deg) !important;
+            margin-right: 6px !important;
+            padding: 8px 22px !important;
+            transition: all 0.2s ease-in-out !important;
         }
-        [data-testid="stTabs"] button[role="tab"]:first-child,
-        [data-testid="stTabs"] [data-baseweb="tab"]:first-child {
-            clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%) !important;
-            -webkit-clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%) !important;
-            margin-left: 0 !important;
+        [data-testid="stTabs"] button[role="tab"] *, 
+        [data-testid="stTabs"] [data-baseweb="tab"] * {
+            transform: skewX(15deg) !important;
+            color: #a0a5b5 !important;
         }
-        [data-testid="stTabs"] button[role="tab"]:hover,
+        [data-testid="stTabs"] button[role="tab"]:hover, 
         [data-testid="stTabs"] [data-baseweb="tab"]:hover {
             background-color: rgba(214, 47, 58, 0.25) !important;
+            border-color: rgba(214, 47, 58, 0.5) !important;
         }
-        [data-testid="stTabs"] button[role="tab"][aria-selected="true"],
+        [data-testid="stTabs"] button[role="tab"][aria-selected="true"], 
         [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
-            background-color: rgba(214, 47, 58, 0.35) !important;
-            border-bottom: 3px solid #D62F3A !important;
-            box-shadow: inset 0 -10px 20px -10px rgba(214, 47, 58, 0.6) !important;
+            background-color: #D62F3A !important;
+            border-color: #D62F3A !important;
+            box-shadow: 0 4px 14px rgba(214, 47, 58, 0.5) !important;
         }
-        [data-testid="stTabs"] button[role="tab"][aria-selected="true"] *,
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] p,
+        [data-testid="stTabs"] button[role="tab"][aria-selected="true"] *, 
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] p, 
         [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] span {
             color: #ffffff !important;
             font-weight: 700 !important;
