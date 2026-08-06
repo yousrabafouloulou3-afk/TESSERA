@@ -141,7 +141,7 @@ def main():
         }
         
         /* ══════════════════════════════════════════════════════
-           RED MOSAIC TABS — covers all Streamlit versions
+           RED MOSAIC TABS — only targets section tabs, not action buttons
            ══════════════════════════════════════════════════════ */
 
         /* Tab list bar */
@@ -155,11 +155,9 @@ def main():
             flex-wrap: wrap !important;
         }
 
-        /* Individual tab buttons — inactive state */
+        /* Individual tab section buttons — inactive state (ONLY role="tab") */
         div[data-testid="stTabs"] button[role="tab"],
-        div[data-testid="stTabs"] [data-baseweb="tab"],
-        div[data-testid="stTabs"] button,
-        [data-testid="stTabs"] button[id*="tab"],
+        [data-testid="stTabs"] [data-baseweb="tab"],
         .stTabs button[role="tab"] {
             background-color: rgba(214, 47, 58, 0.08) !important;
             border: 1px solid rgba(214, 47, 58, 0.3) !important;
@@ -171,44 +169,40 @@ def main():
             color: #c0c5d0 !important;
         }
 
-        /* Tab button text — inactive */
+        /* Tab section text — inactive */
         div[data-testid="stTabs"] button[role="tab"] p,
         div[data-testid="stTabs"] button[role="tab"] span,
         div[data-testid="stTabs"] button[role="tab"] *,
-        div[data-testid="stTabs"] [data-baseweb="tab"] *,
-        div[data-testid="stTabs"] button * {
+        [data-testid="stTabs"] [data-baseweb="tab"] * {
             color: #a0a5b5 !important;
         }
 
-        /* Hover */
+        /* Hover — tabs only */
         div[data-testid="stTabs"] button[role="tab"]:hover,
-        div[data-testid="stTabs"] [data-baseweb="tab"]:hover,
-        div[data-testid="stTabs"] button:hover {
+        [data-testid="stTabs"] [data-baseweb="tab"]:hover {
             background-color: rgba(214, 47, 58, 0.2) !important;
             border-color: rgba(214, 47, 58, 0.6) !important;
             color: #ffffff !important;
         }
 
-        /* Active / selected tab */
+        /* Active / selected tab section */
         div[data-testid="stTabs"] button[role="tab"][aria-selected="true"],
-        div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"],
-        div[data-testid="stTabs"] button[aria-selected="true"],
-        [data-testid="stTabs"] button[id*="tab"][aria-selected="true"] {
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
             background-color: #D62F3A !important;
             border-color: #D62F3A !important;
             box-shadow: 0 4px 16px rgba(214, 47, 58, 0.55) !important;
             color: #ffffff !important;
         }
 
-        /* Active tab text */
+        /* Active tab section text */
         div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] *,
-        div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] *,
-        div[data-testid="stTabs"] button[aria-selected="true"] *,
-        div[data-testid="stTabs"] button[aria-selected="true"] p,
-        div[data-testid="stTabs"] button[aria-selected="true"] span {
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] *,
+        div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] p,
+        div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] span {
             color: #ffffff !important;
             font-weight: 700 !important;
         }
+
 
         /* Tab panel (content area) — subtle red left border to tie in the theme */
         [data-testid="stTabsTabPanel"],
