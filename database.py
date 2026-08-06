@@ -199,14 +199,6 @@ def seed_default_users():
     c.execute("INSERT OR IGNORE INTO Users (username, password, role, linked_id) VALUES ('admin', 'admin123', 'admin', NULL)")
     c.execute("UPDATE Users SET password = 'admin123', role = 'admin' WHERE username = 'admin'")
 
-    # Get ID_P for professor Amine if exists
-    c.execute("SELECT ID_P FROM Profs WHERE LOWER(nameP) = 'amine'")
-    prof_row = c.fetchone()
-    amine_linked_id = prof_row['ID_P'] if prof_row else 1
-
-    # Seed or update amine account as teacher
-    c.execute("INSERT OR IGNORE INTO Users (username, password, role, linked_id) VALUES ('amine', 'amine123', 'teacher', ?)", (amine_linked_id,))
-    c.execute("UPDATE Users SET password = 'amine123', role = 'teacher', linked_id = ? WHERE username = 'amine'", (amine_linked_id,))
     conn.commit()
     conn.close()
 
