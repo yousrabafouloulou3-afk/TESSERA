@@ -77,7 +77,7 @@ TRANSLATIONS = {
         
         "If your question isn't answered here, please contact support.": "Si vous ne trouvez pas de réponse à votre question ici, veuillez contacter le support.",
         "🚪 Logout": "🚪 Se déconnecter",
-        "🔄 Refresh App": "🔄 Actualiser l'application",
+        "Refresh App": "Actualiser l'application",
         "Admin": "Administrateur",
         "Teacher": "Enseignant",
         "Student": "Étudiant",

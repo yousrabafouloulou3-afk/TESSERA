@@ -306,6 +306,8 @@ def main():
             nav_page = st.radio(tr("Go to:"), nav_options)
             
             st.divider()
+            if st.button(tr("Refresh App"), icon=":material/refresh:", use_container_width=True):
+                st.rerun()
             st.button(tr("🚪 Logout"), type="primary", use_container_width=True, key="sidebar_logout_btn", on_click=logout)
 
     if st.session_state.get('user') is None:
