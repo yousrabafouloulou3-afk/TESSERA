@@ -35,77 +35,35 @@ def main():
 
     import streamlit.components.v1 as components
 
-    # Make native Dark Mode permanent & force left sidebar to be open
+    # Make native Dark Mode permanent
     components.html("""
         <script>
-            function ensureSidebarOpen() {
-                try {
-                    var parentDoc = window.parent.document;
-                    parentDoc.documentElement.setAttribute('data-theme', 'dark');
-                    parentDoc.body.setAttribute('data-theme', 'dark');
-                    var app = parentDoc.querySelector('.stApp');
-                    if (app) app.setAttribute('data-theme', 'dark');
-                    
-                    var sidebar = parentDoc.querySelector('[data-testid="stSidebar"]');
-                    var expandBtn = parentDoc.querySelector('[data-testid="stSidebarCollapsedControl"] button, button[aria-label*="sidebar"], button[aria-label*="Sidebar"]');
-                    if (sidebar && sidebar.getAttribute('aria-expanded') === 'false' && expandBtn) {
-                        expandBtn.click();
-                    }
-                } catch(e) {}
-            }
-            ensureSidebarOpen();
-            setTimeout(ensureSidebarOpen, 300);
-            setTimeout(ensureSidebarOpen, 1000);
+            try {
+                var parentDoc = window.parent.document;
+                parentDoc.documentElement.setAttribute('data-theme', 'dark');
+                parentDoc.body.setAttribute('data-theme', 'dark');
+                var app = parentDoc.querySelector('.stApp');
+                if (app) app.setAttribute('data-theme', 'dark');
+            } catch(e) {}
         </script>
     """, height=0, width=0)
 
     # Inject layout & header removal CSS
     st.markdown("""
         <style>
-        /* Force Left Sidebar to be permanently visible and docked on screen */
-        [data-testid="stSidebar"], 
-        section[data-testid="stSidebar"],
-        div[data-testid="stSidebar"] {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            transform: none !important;
-            margin-left: 0 !important;
-            left: 0 !important;
-            position: fixed !important;
-            top: 0 !important;
-            bottom: 0 !important;
-            width: 280px !important;
-            min-width: 280px !important;
-            z-index: 100000 !important;
-            background-color: #262730 !important;
+        /* Transparent Header & Visible Sidebar Toggle Arrow (<< / >>) */
+        [data-testid="stHeader"] {
+            background-color: transparent !important;
+            background: transparent !important;
         }
-
-        /* Adjust main container to give space for fixed left sidebar */
-        [data-testid="stAppViewContainer"] > section:nth-child(2),
-        [data-testid="stMain"],
-        .stMain {
-            margin-left: 280px !important;
-        }
-
-        /* Visible bright red sidebar toggle button if collapsed */
         [data-testid="stSidebarCollapsedControl"],
-        [data-testid="stSidebarCollapsedControl"] button,
+        [data-testid="stSidebarHeader"] button,
         button[aria-label*="sidebar"],
         button[aria-label*="Sidebar"] {
             display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
-            background-color: #D62F3A !important;
             color: #ffffff !important;
-            border-radius: 4px !important;
-            z-index: 999999 !important;
-        }
-
-        /* Transparent Header */
-        [data-testid="stHeader"] {
-            background-color: transparent !important;
-            background: transparent !important;
         }
 
         /* Hide ONLY top-right buttons (Fork, GitHub link, 3 dots menu) */
