@@ -33,77 +33,6 @@ def main():
     if 'language' not in st.session_state:
         st.session_state.language = 'English'
 
-    # Inject sidebar expand overlay + dark mode via st.html
-    st.html("""
-        <script>
-        (function() {
-            function reactClick(el) {
-                ['mousedown', 'mouseup', 'click'].forEach(function(t) {
-                    el.dispatchEvent(new MouseEvent(t, {bubbles: true, cancelable: true}));
-                });
-            }
-            function findExpandBtn() {
-                var sels = [
-                    '[data-testid="stSidebarCollapsedControl"] button',
-                    'button[aria-label="Open sidebar"]',
-                    'button[aria-label="open sidebar"]',
-                    'button[aria-label*="sidebar"]',
-                    'button[aria-label*="Sidebar"]'
-                ];
-                for (var i = 0; i < sels.length; i++) {
-                    var el = document.querySelector(sels[i]);
-                    if (el) return el;
-                }
-                return null;
-            }
-            function createOverlayBtn() {
-                var b = document.getElementById('__tessera_sb__');
-                if (b) return b;
-                b = document.createElement('button');
-                b.id = '__tessera_sb__';
-                b.innerHTML = '&#x276F;&#x276F;';
-                b.title = 'Open sidebar';
-                Object.assign(b.style, {
-                    position:'fixed', top:'12px', left:'12px',
-                    zIndex:'9999999', background:'#D62F3A', color:'#fff',
-                    border:'none', borderRadius:'8px', padding:'6px 12px',
-                    fontSize:'15px', fontWeight:'bold', cursor:'pointer',
-                    display:'none', boxShadow:'0 4px 12px rgba(214,47,58,0.5)',
-                    lineHeight:'1.2'
-                });
-                b.addEventListener('click', function() {
-                    var nb = findExpandBtn();
-                    if (nb) reactClick(nb);
-                });
-                document.body.appendChild(b);
-                return b;
-            }
-            function isCollapsed() {
-                var s = document.querySelector('[data-testid="stSidebar"]');
-                if (!s) return false;
-                var r = s.getBoundingClientRect();
-                return r.width < 20 || r.left < -50;
-            }
-            function sync() {
-                var b = createOverlayBtn();
-                b.style.display = isCollapsed() ? 'flex' : 'none';
-            }
-            function init() {
-                document.documentElement.setAttribute('data-theme','dark');
-                document.body.setAttribute('data-theme','dark');
-                var a = document.querySelector('.stApp');
-                if (a) a.setAttribute('data-theme','dark');
-                createOverlayBtn();
-                new MutationObserver(sync).observe(document.body, {attributes:true, subtree:true, childList:true});
-                sync(); setTimeout(sync,400); setTimeout(sync,1200);
-                window.addEventListener('resize', sync);
-            }
-            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-            else init();
-        })();
-        </script>
-    """)
-
     # Inject layout & header removal CSS
     st.markdown("""
         <style>
@@ -113,12 +42,53 @@ def main():
             background: transparent !important;
         }
 
-        /* Sidebar collapse button (<<) styling */
-        [data-testid="stSidebarHeader"] button {
+
+        /* ── Sidebar Collapse button (<<) ── */
+        [data-testid="stSidebarHeader"] button,
+        section[data-testid="stSidebar"] button[kind="header"] {
             visibility: visible !important;
             opacity: 1 !important;
             display: flex !important;
+            pointer-events: auto !important;
         }
+
+        /* ── Sidebar Expand button (>>) — shown when sidebar is collapsed ── */
+        /* Streamlit renders this div only when collapsed; we pin it top-left and style it red */
+        [data-testid="stSidebarCollapsedControl"],
+        div[data-testid="stSidebarCollapsedControl"] {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: fixed !important;
+            top: 10px !important;
+            left: 10px !important;
+            z-index: 9999999 !important;
+            pointer-events: auto !important;
+        }
+
+        [data-testid="stSidebarCollapsedControl"] button {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            background-color: #D62F3A !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 8px !important;
+            padding: 6px 12px !important;
+            font-size: 15px !important;
+            font-weight: bold !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 12px rgba(214,47,58,0.5) !important;
+            pointer-events: auto !important;
+        }
+
+        [data-testid="stSidebarCollapsedControl"] button svg,
+        [data-testid="stSidebarCollapsedControl"] button path {
+            fill: #ffffff !important;
+            stroke: #ffffff !important;
+            color: #ffffff !important;
+        }
+
 
         /* Hide ONLY top-right action buttons (Fork app, Deploy button, GitHub link) */
         .stAppDeployButton,
