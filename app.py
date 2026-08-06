@@ -80,41 +80,43 @@ def main():
             opacity: 1 !important;
         }
 
-        /* Modern 'Mosaic' Tabs (Angled Parallelogram Red Aesthetic for Sections) */
-        [data-testid="stTabs"] [data-baseweb="tab-list"], div[data-baseweb="tab-list"] {
-            gap: 6px !important;
+        /* Modern Red Mosaic Tabs Styling (Polygon Angled Mosaic Aesthetic) */
+        [data-testid="stTabs"] [data-baseweb="tab-list"] {
+            gap: 2px !important;
             background-color: transparent !important;
-            padding-bottom: 2px !important;
-            border-bottom: 2px solid rgba(214, 47, 58, 0.4) !important;
-        }
-        [data-testid="stTabs"] [data-baseweb="tab"], div[data-baseweb="tab"], button[role="tab"] {
-            background-color: rgba(128, 128, 128, 0.15) !important;
-            border: 1px solid rgba(128, 128, 128, 0.25) !important;
+            padding-bottom: 0px !important;
             border-bottom: none !important;
-            border-radius: 6px 6px 0 0 !important;
-            transform: skewX(-12deg) !important;
-            margin-right: 4px !important;
-            padding: 8px 22px !important;
+        }
+        [data-testid="stTabs"] button[role="tab"],
+        [data-testid="stTabs"] [data-baseweb="tab"] {
+            background-color: rgba(128, 128, 128, 0.15) !important;
+            border: none !important;
+            border-radius: 0 !important;
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%) !important;
+            -webkit-clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%) !important;
+            margin-left: -8px !important;
+            padding: 10px 24px !important;
             transition: all 0.2s ease !important;
         }
-        [data-testid="stTabs"] [data-baseweb="tab"] *, div[data-baseweb="tab"] *, button[role="tab"] * {
-            transform: skewX(12deg) !important;
-            color: #a0a5b5 !important;
+        [data-testid="stTabs"] button[role="tab"]:first-child,
+        [data-testid="stTabs"] [data-baseweb="tab"]:first-child {
+            clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%) !important;
+            -webkit-clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%) !important;
+            margin-left: 0 !important;
         }
-        [data-testid="stTabs"] [data-baseweb="tab"]:hover, button[role="tab"]:hover {
-            background-color: rgba(214, 47, 58, 0.2) !important;
-            border-color: rgba(214, 47, 58, 0.5) !important;
+        [data-testid="stTabs"] button[role="tab"]:hover,
+        [data-testid="stTabs"] [data-baseweb="tab"]:hover {
+            background-color: rgba(214, 47, 58, 0.25) !important;
         }
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"],
-        div[data-baseweb="tab"][aria-selected="true"],
-        button[role="tab"][aria-selected="true"] {
-            background-color: #D62F3A !important;
-            border-color: #D62F3A !important;
-            box-shadow: 0 4px 12px rgba(214, 47, 58, 0.4) !important;
+        [data-testid="stTabs"] button[role="tab"][aria-selected="true"],
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
+            background-color: rgba(214, 47, 58, 0.35) !important;
+            border-bottom: 3px solid #D62F3A !important;
+            box-shadow: inset 0 -10px 20px -10px rgba(214, 47, 58, 0.6) !important;
         }
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] *,
-        div[data-baseweb="tab"][aria-selected="true"] *,
-        button[role="tab"][aria-selected="true"] * {
+        [data-testid="stTabs"] button[role="tab"][aria-selected="true"] *,
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] p,
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] span {
             color: #ffffff !important;
             font-weight: 700 !important;
         }
