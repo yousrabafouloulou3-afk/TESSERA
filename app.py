@@ -35,7 +35,7 @@ def main():
 
     import streamlit.components.v1 as components
 
-    # Make native Dark Mode permanent & auto-expand sidebar on initial load
+    # Make native Dark Mode permanent
     components.html("""
         <script>
             try {
@@ -44,16 +44,6 @@ def main():
                 parentDoc.body.setAttribute('data-theme', 'dark');
                 var app = parentDoc.querySelector('.stApp');
                 if (app) app.setAttribute('data-theme', 'dark');
-
-                function openSidebarIfCollapsed() {
-                    var sidebar = parentDoc.querySelector('[data-testid="stSidebar"]');
-                    var expandBtn = parentDoc.querySelector('[data-testid="stSidebarCollapsedControl"] button, button[aria-label*="sidebar"], button[aria-label*="Sidebar"]');
-                    if (sidebar && sidebar.getAttribute('aria-expanded') === 'false' && expandBtn) {
-                        expandBtn.click();
-                    }
-                }
-                openSidebarIfCollapsed();
-                setTimeout(openSidebarIfCollapsed, 300);
             } catch(e) {}
         </script>
     """, height=0, width=0)
@@ -61,34 +51,38 @@ def main():
     # Inject layout & header removal CSS
     st.markdown("""
         <style>
-        /* Transparent Header & Visible Sidebar Toggle Arrow (<< / >>) */
+        /* Transparent Header */
         [data-testid="stHeader"] {
             background-color: transparent !important;
             background: transparent !important;
         }
-        /* Sidebar Expand / Collapse Toggle Buttons (<< and >>) */
-        [data-testid="stSidebarCollapsedControl"] {
+
+        /* Permanently visible Red Expand Button (>>) at Top-Left when Sidebar is Collapsed */
+        [data-testid="stSidebarCollapsedControl"],
+        div[data-testid="stSidebarCollapsedControl"] {
             display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
             position: fixed !important;
-            top: 0.75rem !important;
-            left: 0.75rem !important;
-            z-index: 999999 !important;
+            top: 12px !important;
+            left: 12px !important;
+            z-index: 9999999 !important;
+            background-color: #D62F3A !important;
+            border-radius: 8px !important;
+            box-shadow: 0 4px 12px rgba(214, 47, 58, 0.5) !important;
         }
+
         [data-testid="stSidebarCollapsedControl"] button,
-        [data-testid="stSidebarHeader"] button,
-        button[aria-label*="sidebar"],
-        button[aria-label*="Sidebar"] {
-            display: flex !important;
+        [data-testid="stSidebarCollapsedControl"] button *,
+        [data-testid="stSidebarCollapsedControl"] svg,
+        [data-testid="stSidebarCollapsedControl"] path {
+            color: #ffffff !important;
+            fill: #ffffff !important;
+            stroke: #ffffff !important;
             visibility: visible !important;
             opacity: 1 !important;
-            color: #ffffff !important;
-            background-color: #262730 !important;
-            border: 1px solid #31333f !important;
-            border-radius: 6px !important;
-            z-index: 999999 !important;
-            pointer-events: auto !important;
+            background-color: transparent !important;
+            border: none !important;
         }
 
         /* Hide ONLY top-right action buttons (Fork app, Deploy button, GitHub link) */
