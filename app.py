@@ -36,85 +36,59 @@ def main():
     if 'night_mode' not in st.session_state:
         st.session_state.night_mode = False
 
+    import streamlit.components.v1 as components
+
     if st.session_state.night_mode:
+        components.html("""
+            <script>
+                try {
+                    var parentDoc = window.parent.document;
+                    parentDoc.documentElement.setAttribute('data-theme', 'dark');
+                    parentDoc.body.setAttribute('data-theme', 'dark');
+                    var app = parentDoc.querySelector('.stApp');
+                    if (app) app.setAttribute('data-theme', 'dark');
+                } catch(e) {}
+            </script>
+        """, height=0, width=0)
         st.markdown("""
             <style>
-            /* Enable native browser dark mode engine for inputs, scrollbars, popovers */
             :root, html, body, .stApp {
                 color-scheme: dark !important;
                 --background-color: #0e1117 !important;
                 --secondary-background-color: #161920 !important;
-                --text-color: #fafafa !important;
+                --text-color: #ffffff !important;
+                --primary-color: #D62F3A !important;
             }
-
-            /* Base Dark Backgrounds & Text */
             html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
                 background-color: #0e1117 !important;
-                color: #fafafa !important;
+                color: #ffffff !important;
             }
-
-            /* Sidebar Dark Background */
-            [data-testid="stSidebar"], [data-testid="stSidebar"] > div {
+            [data-testid="stSidebar"] {
                 background-color: #161920 !important;
-                border-right: 1px solid #262a36 !important;
             }
-
-            /* Containers & Bordered Cards */
-            [data-testid="stVerticalBlockBorderWrapper"] {
-                background-color: #161920 !important;
-                border-color: #262a36 !important;
-            }
-
-            /* Inputs, Selectboxes, Textareas */
-            div[data-baseweb="select"] > div, 
-            input, 
-            div[data-baseweb="input"], 
-            textarea {
+            div[data-baseweb="select"] > div, input, textarea {
                 background-color: #1e222d !important;
                 color: #ffffff !important;
                 border-color: #333a4a !important;
             }
-
-            /* Popover Menus & Dropdowns */
-            div[data-baseweb="popover"] > div, 
-            div[data-baseweb="popover"] ul,
-            div[data-baseweb="menu"] {
-                background-color: #1e222d !important;
-                border: 1px solid #333a4a !important;
-            }
-            div[data-baseweb="popover"] li,
-            div[data-baseweb="menu"] [role="option"] {
-                color: #ffffff !important;
-            }
-            div[data-baseweb="popover"] li:hover,
-            div[data-baseweb="menu"] [role="option"]:hover {
-                background-color: #2c3242 !important;
-            }
-
-            /* Standard Buttons */
-            .stButton > button, .stDownloadButton > button {
+            div[data-baseweb="popover"] > div, div[data-baseweb="menu"] {
                 background-color: #1e222d !important;
                 color: #ffffff !important;
-                border-color: #333a4a !important;
-            }
-            .stButton > button:hover, .stDownloadButton > button:hover {
-                border-color: #D62F3A !important;
-                color: #D62F3A !important;
-            }
-
-            /* Primary Action Buttons (Red Accent) */
-            .stButton > button[kind="primary"], .stFormSubmitButton > button {
-                background-color: #D62F3A !important;
-                color: #ffffff !important;
-                border-color: #D62F3A !important;
-            }
-
-            /* Dataframes & Data Editors */
-            [data-testid="stDataFrame"], [data-testid="stDataEditor"] {
-                background-color: #161920 !important;
             }
             </style>
         """, unsafe_allow_html=True)
+    else:
+        components.html("""
+            <script>
+                try {
+                    var parentDoc = window.parent.document;
+                    parentDoc.documentElement.setAttribute('data-theme', 'light');
+                    parentDoc.body.setAttribute('data-theme', 'light');
+                    var app = parentDoc.querySelector('.stApp');
+                    if (app) app.setAttribute('data-theme', 'light');
+                } catch(e) {}
+            </script>
+        """, height=0, width=0)
 
     # Inject minimal modern CSS
     st.markdown("""
