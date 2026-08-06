@@ -57,7 +57,15 @@ def main():
             background: transparent !important;
         }
         /* Sidebar Expand / Collapse Toggle Buttons (<< and >>) */
-        [data-testid="stSidebarCollapsedControl"],
+        [data-testid="stSidebarCollapsedControl"] {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: fixed !important;
+            top: 0.75rem !important;
+            left: 0.75rem !important;
+            z-index: 999999 !important;
+        }
         [data-testid="stSidebarCollapsedControl"] button,
         [data-testid="stSidebarHeader"] button,
         button[aria-label*="sidebar"],
@@ -66,6 +74,9 @@ def main():
             visibility: visible !important;
             opacity: 1 !important;
             color: #ffffff !important;
+            background-color: #262730 !important;
+            border: 1px solid #31333f !important;
+            border-radius: 6px !important;
             z-index: 999999 !important;
             pointer-events: auto !important;
         }
