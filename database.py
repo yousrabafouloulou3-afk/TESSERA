@@ -2,6 +2,7 @@ import os
 import re
 import json
 import pandas as pd
+import streamlit as st
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  PostgreSQL / Supabase compatibility layer
@@ -66,6 +67,12 @@ class _CompatConn:
     def commit(self):
         self._conn.commit()
 
+    def rollback(self):
+        try:
+            self._conn.rollback()
+        except Exception:
+            pass
+
     def close(self):
         try:
             self._conn.close()
@@ -79,11 +86,15 @@ class _CompatConn:
         self.close()
 
 
-def get_db_connection():
-    """Open a Supabase/PostgreSQL connection wrapped in the compat layer."""
+@st.cache_resource
+def _get_pool():
+    """Create a persistent psycopg2 connection pool (cached for the lifetime of the app)."""
     import streamlit as st
+    from psycopg2 import pool as pg_pool
     cfg = st.secrets["supabase"]
-    raw = psycopg2.connect(
+    return pg_pool.ThreadedConnectionPool(
+        minconn=1,
+        maxconn=10,
         host=cfg["host"],
         port=int(cfg["port"]),
         dbname=cfg["database"],
@@ -92,8 +103,29 @@ def get_db_connection():
         sslmode="require",
         connect_timeout=10,
     )
-    raw.autocommit = False
-    return _CompatConn(raw)
+
+
+def get_db_connection():
+    """Borrow a connection from the pool and return it wrapped in the compat layer."""
+    import streamlit as st
+    conn = _get_pool().getconn()
+    conn.autocommit = False
+    return _PoolCompatConn(conn)
+
+
+class _PoolCompatConn(_CompatConn):
+    """Like _CompatConn but returns the connection to the pool on close()."""
+    def close(self):
+        try:
+            _get_pool().putconn(self._conn)
+        except Exception:
+            try:
+                self._conn.close()
+            except Exception:
+                pass
+
+    def __exit__(self, *args):
+        self.close()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
