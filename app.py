@@ -35,7 +35,7 @@ def main():
 
     import streamlit.components.v1 as components
 
-    # Make native Dark Mode permanent
+    # Make native Dark Mode permanent & ensure sidebar is expanded
     components.html("""
         <script>
             try {
@@ -44,6 +44,13 @@ def main():
                 parentDoc.body.setAttribute('data-theme', 'dark');
                 var app = parentDoc.querySelector('.stApp');
                 if (app) app.setAttribute('data-theme', 'dark');
+                
+                // If sidebar expand button exists and sidebar is collapsed, click it to expand
+                var expandBtn = parentDoc.querySelector('[data-testid="stSidebarCollapsedControl"] button, button[aria-label*="sidebar"], button[aria-label*="Sidebar"]');
+                var sidebar = parentDoc.querySelector('[data-testid="stSidebar"]');
+                if (sidebar && sidebar.getAttribute('aria-expanded') === 'false' && expandBtn) {
+                    expandBtn.click();
+                }
             } catch(e) {}
         </script>
     """, height=0, width=0)
@@ -57,6 +64,7 @@ def main():
             background: transparent !important;
         }
         [data-testid="stSidebarCollapsedControl"], 
+        [data-testid="stSidebarCollapsedControl"] button,
         button[aria-label*="sidebar"],
         button[aria-label*="Sidebar"] {
             display: flex !important;
@@ -85,52 +93,55 @@ def main():
             font-family: 'Inter', sans-serif;
         }
         
-        /* Allow tabs overflow so polygon/skew shapes are never clipped */
-        [data-testid="stTabs"], 
-        [data-testid="stTabs"] > div, 
-        [data-baseweb="tab-list"], 
-        [data-baseweb="tab-highlight"],
-        [data-baseweb="tab-border"] {
-            overflow: visible !important;
+        /* High specificity Red Mosaic Tabs Styling for Streamlit 1.61 */
+        [data-testid="stTabs"] [data-baseweb="tab-list"],
+        div[data-testid="stTabs"] div[data-baseweb="tab-list"] {
+            gap: 6px !important;
+            background-color: transparent !important;
+            padding-bottom: 2px !important;
+            border-bottom: 2px solid rgba(214, 47, 58, 0.3) !important;
         }
 
-        /* Modern Red Mosaic Tabs Styling (Angled Parallelogram Tabs) */
-        [data-testid="stTabs"] [data-baseweb="tab-list"] {
-            gap: 8px !important;
-            background-color: transparent !important;
-            padding-bottom: 4px !important;
-            border-bottom: 2px solid rgba(214, 47, 58, 0.4) !important;
-        }
-        [data-testid="stTabs"] button[role="tab"], 
-        [data-testid="stTabs"] [data-baseweb="tab"] {
+        div[data-testid="stTabs"] button,
+        div[data-testid="stTabs"] button[role="tab"], 
+        div[data-testid="stTabs"] [data-baseweb="tab"],
+        [data-testid="stTabs"] button[id*="tab"] {
             background-color: rgba(128, 128, 128, 0.15) !important;
-            border: 1px solid rgba(128, 128, 128, 0.3) !important;
+            border: 1px solid rgba(128, 128, 128, 0.25) !important;
             border-bottom: none !important;
             border-radius: 6px 6px 0 0 !important;
-            transform: skewX(-15deg) !important;
-            margin-right: 6px !important;
-            padding: 8px 22px !important;
+            margin-right: 4px !important;
+            padding: 8px 20px !important;
             transition: all 0.2s ease-in-out !important;
         }
-        [data-testid="stTabs"] button[role="tab"] *, 
-        [data-testid="stTabs"] [data-baseweb="tab"] * {
-            transform: skewX(15deg) !important;
+
+        div[data-testid="stTabs"] button *,
+        div[data-testid="stTabs"] button[role="tab"] *, 
+        div[data-testid="stTabs"] [data-baseweb="tab"] * {
             color: #a0a5b5 !important;
         }
-        [data-testid="stTabs"] button[role="tab"]:hover, 
-        [data-testid="stTabs"] [data-baseweb="tab"]:hover {
+
+        div[data-testid="stTabs"] button:hover,
+        div[data-testid="stTabs"] button[role="tab"]:hover, 
+        div[data-testid="stTabs"] [data-baseweb="tab"]:hover {
             background-color: rgba(214, 47, 58, 0.25) !important;
             border-color: rgba(214, 47, 58, 0.5) !important;
         }
-        [data-testid="stTabs"] button[role="tab"][aria-selected="true"], 
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
+
+        div[data-testid="stTabs"] button[aria-selected="true"],
+        div[data-testid="stTabs"] button[role="tab"][aria-selected="true"], 
+        div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"],
+        [data-testid="stTabs"] button[id*="tab"][aria-selected="true"] {
             background-color: #D62F3A !important;
             border-color: #D62F3A !important;
-            box-shadow: 0 4px 14px rgba(214, 47, 58, 0.5) !important;
+            box-shadow: 0 4px 12px rgba(214, 47, 58, 0.5) !important;
         }
-        [data-testid="stTabs"] button[role="tab"][aria-selected="true"] *, 
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] p, 
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] span {
+
+        div[data-testid="stTabs"] button[aria-selected="true"] *,
+        div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] *, 
+        div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] *,
+        div[data-testid="stTabs"] button[aria-selected="true"] p,
+        div[data-testid="stTabs"] button[aria-selected="true"] span {
             color: #ffffff !important;
             font-weight: 700 !important;
         }
