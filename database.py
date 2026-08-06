@@ -132,7 +132,9 @@ class _PoolCompatConn(_CompatConn):
 #  Schema – PostgreSQL DDL (replaces SQLite schema)
 # ─────────────────────────────────────────────────────────────────────────────
 
+@st.cache_resource
 def init_db():
+    """Initialize DB schema — runs once per server lifetime (cached by Streamlit)."""
     conn = get_db_connection()
     c = conn.cursor()
 
