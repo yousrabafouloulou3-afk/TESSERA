@@ -153,7 +153,7 @@ def show():
                 if st.button(tr("Apply Valid State Reschedule"), type="primary"):
                     data = load_data_from_db()
                     c.execute("SELECT * FROM Planning")
-                    all_sessions = [dict(row) for row in c.fetchall()]
+                    all_sessions = c.fetchall()
                     from engine.sa_optimizer import build_state_from_final, remove_session
                     planning_state = build_state_from_final(all_sessions, data)
                     remove_session(selected_session, planning_state, data)
@@ -601,7 +601,7 @@ def show():
                             with st.spinner("AI is analyzing the timetable for perfect matches..."):
                                 data = load_data_from_db()
                                 c.execute("SELECT * FROM Planning")
-                                all_plannings = [dict(row) for row in c.fetchall()]
+                                all_plannings = c.fetchall()
                         
                                 from engine.sa_optimizer import build_state_from_final
                                 state = build_state_from_final(all_plannings, data)

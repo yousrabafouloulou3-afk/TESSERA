@@ -712,7 +712,7 @@ def load_draft_from_db_for_section(section_id, level, spec_name, section_name):
         WHERE m.ID_E = ? 
            OR (e.typeE = 0 AND e.sectionID = ?)
     """, (section_id, section_id))
-    rows = [dict(row) for row in c.fetchall()]
+    rows = c.fetchall()
     conn.close()
     
     if not rows:
