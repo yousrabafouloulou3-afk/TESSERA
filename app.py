@@ -33,113 +33,73 @@ def main():
     if 'language' not in st.session_state:
         st.session_state.language = 'English'
 
-    # Inject sidebar expand overlay + dark mode via st.html (Streamlit 1.40+)
+    # Inject sidebar expand overlay + dark mode via st.html
     st.html("""
         <script>
         (function() {
             function reactClick(el) {
-                // Streamlit buttons use React — must fire mousedown + mouseup + click
-                ['mousedown', 'mouseup', 'click'].forEach(function(type) {
-                    el.dispatchEvent(new MouseEvent(type, {bubbles: true, cancelable: true}));
+                ['mousedown', 'mouseup', 'click'].forEach(function(t) {
+                    el.dispatchEvent(new MouseEvent(t, {bubbles: true, cancelable: true}));
                 });
             }
-
-            function findSidebarExpandBtn(doc) {
-                // Try multiple selectors — Streamlit changes these between versions
-                var selectors = [
+            function findExpandBtn() {
+                var sels = [
                     '[data-testid="stSidebarCollapsedControl"] button',
                     'button[aria-label="Open sidebar"]',
                     'button[aria-label="open sidebar"]',
                     'button[aria-label*="sidebar"]',
-                    'button[aria-label*="Sidebar"]',
-                    '[data-testid="stSidebarCollapsedControl"] *[role="button"]'
+                    'button[aria-label*="Sidebar"]'
                 ];
-                for (var i = 0; i < selectors.length; i++) {
-                    var el = doc.querySelector(selectors[i]);
+                for (var i = 0; i < sels.length; i++) {
+                    var el = document.querySelector(sels[i]);
                     if (el) return el;
                 }
                 return null;
             }
-
+            function createOverlayBtn() {
+                var b = document.getElementById('__tessera_sb__');
+                if (b) return b;
+                b = document.createElement('button');
+                b.id = '__tessera_sb__';
+                b.innerHTML = '&#x276F;&#x276F;';
+                b.title = 'Open sidebar';
+                Object.assign(b.style, {
+                    position:'fixed', top:'12px', left:'12px',
+                    zIndex:'9999999', background:'#D62F3A', color:'#fff',
+                    border:'none', borderRadius:'8px', padding:'6px 12px',
+                    fontSize:'15px', fontWeight:'bold', cursor:'pointer',
+                    display:'none', boxShadow:'0 4px 12px rgba(214,47,58,0.5)',
+                    lineHeight:'1.2'
+                });
+                b.addEventListener('click', function() {
+                    var nb = findExpandBtn();
+                    if (nb) reactClick(nb);
+                });
+                document.body.appendChild(b);
+                return b;
+            }
+            function isCollapsed() {
+                var s = document.querySelector('[data-testid="stSidebar"]');
+                if (!s) return false;
+                var r = s.getBoundingClientRect();
+                return r.width < 20 || r.left < -50;
+            }
+            function sync() {
+                var b = createOverlayBtn();
+                b.style.display = isCollapsed() ? 'flex' : 'none';
+            }
             function init() {
-                try {
-                    var pd = window.parent.document;
-
-                    // Force dark mode
-                    pd.documentElement.setAttribute('data-theme', 'dark');
-                    pd.body.setAttribute('data-theme', 'dark');
-                    var app = pd.querySelector('.stApp');
-                    if (app) app.setAttribute('data-theme', 'dark');
-
-                    // Create custom sidebar expand button
-                    function createExpandBtn() {
-                        var existing = pd.getElementById('__tessera_expand_btn__');
-                        if (existing) return existing;
-                        var btn = pd.createElement('button');
-                        btn.id = '__tessera_expand_btn__';
-                        btn.innerHTML = '&#x276F;&#x276F;';
-                        btn.title = 'Open sidebar';
-                        Object.assign(btn.style, {
-                            position: 'fixed',
-                            top: '12px',
-                            left: '12px',
-                            zIndex: '9999999',
-                            background: '#D62F3A',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '8px',
-                            padding: '6px 12px',
-                            fontSize: '15px',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            display: 'none',
-                            boxShadow: '0 4px 12px rgba(214,47,58,0.5)',
-                            lineHeight: '1.2'
-                        });
-                        btn.addEventListener('click', function() {
-                            var nativeBtn = findSidebarExpandBtn(pd);
-                            if (nativeBtn) {
-                                reactClick(nativeBtn);
-                            } else {
-                                // Fallback: toggle via session storage flag read on next render
-                                pd.dispatchEvent(new CustomEvent('tessera:open-sidebar'));
-                            }
-                        });
-                        pd.body.appendChild(btn);
-                        return btn;
-                    }
-
-                    function isSidebarCollapsed() {
-                        var sidebar = pd.querySelector('[data-testid="stSidebar"]');
-                        if (!sidebar) return false;
-                        var rect = sidebar.getBoundingClientRect();
-                        // Collapsed when width is near-zero or pushed off-screen
-                        return rect.width < 20 || rect.left < -50;
-                    }
-
-                    function updateBtnVisibility() {
-                        var btn = createExpandBtn();
-                        btn.style.display = isSidebarCollapsed() ? 'flex' : 'none';
-                    }
-
-                    // Watch for DOM mutations (sidebar transitions)
-                    var observer = new MutationObserver(function() {
-                        updateBtnVisibility();
-                    });
-                    observer.observe(pd.body, { attributes: true, subtree: true, childList: true });
-
-                    updateBtnVisibility();
-                    setTimeout(updateBtnVisibility, 400);
-                    setTimeout(updateBtnVisibility, 1200);
-                    window.parent.addEventListener('resize', updateBtnVisibility);
-                } catch(e) { console.warn('tessera sidebar overlay:', e); }
+                document.documentElement.setAttribute('data-theme','dark');
+                document.body.setAttribute('data-theme','dark');
+                var a = document.querySelector('.stApp');
+                if (a) a.setAttribute('data-theme','dark');
+                createOverlayBtn();
+                new MutationObserver(sync).observe(document.body, {attributes:true, subtree:true, childList:true});
+                sync(); setTimeout(sync,400); setTimeout(sync,1200);
+                window.addEventListener('resize', sync);
             }
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', init);
-            } else {
-                init();
-            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+            else init();
         })();
         </script>
     """)
