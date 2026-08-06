@@ -33,90 +33,116 @@ def main():
     if 'language' not in st.session_state:
         st.session_state.language = 'English'
 
-    import streamlit.components.v1 as components
-
-    # Make native Dark Mode permanent + inject sidebar expand button overlay
-    components.html("""
+    # Inject sidebar expand overlay + dark mode via st.html (Streamlit 1.40+)
+    st.html("""
         <script>
         (function() {
-            try {
-                var pd = window.parent.document;
+            function reactClick(el) {
+                // Streamlit buttons use React — must fire mousedown + mouseup + click
+                ['mousedown', 'mouseup', 'click'].forEach(function(type) {
+                    el.dispatchEvent(new MouseEvent(type, {bubbles: true, cancelable: true}));
+                });
+            }
 
-                // Force dark mode
-                pd.documentElement.setAttribute('data-theme', 'dark');
-                pd.body.setAttribute('data-theme', 'dark');
-                var app = pd.querySelector('.stApp');
-                if (app) app.setAttribute('data-theme', 'dark');
-
-                // Create custom persistent sidebar expand button
-                function createExpandBtn() {
-                    if (pd.getElementById('__tessera_expand_btn__')) return;
-                    var btn = pd.createElement('button');
-                    btn.id = '__tessera_expand_btn__';
-                    btn.innerHTML = '&#x276F;&#x276F;';
-                    btn.title = 'Open sidebar';
-                    btn.style.cssText = [
-                        'position: fixed',
-                        'top: 12px',
-                        'left: 12px',
-                        'z-index: 9999999',
-                        'background: #D62F3A',
-                        'color: #fff',
-                        'border: none',
-                        'border-radius: 8px',
-                        'padding: 6px 10px',
-                        'font-size: 14px',
-                        'font-weight: bold',
-                        'cursor: pointer',
-                        'box-shadow: 0 4px 12px rgba(214,47,58,0.5)',
-                        'display: none',
-                        'line-height: 1'
-                    ].join(' !important; ') + ' !important';
-                    btn.onclick = function() {
-                        var nativeBtn = pd.querySelector(
-                            '[data-testid="stSidebarCollapsedControl"] button, button[aria-label*="sidebar"], button[aria-label*="Sidebar"]'
-                        );
-                        if (nativeBtn) nativeBtn.click();
-                        btn.style.setProperty('display', 'none', 'important');
-                    };
-                    pd.body.appendChild(btn);
-                    return btn;
+            function findSidebarExpandBtn(doc) {
+                // Try multiple selectors — Streamlit changes these between versions
+                var selectors = [
+                    '[data-testid="stSidebarCollapsedControl"] button',
+                    'button[aria-label="Open sidebar"]',
+                    'button[aria-label="open sidebar"]',
+                    'button[aria-label*="sidebar"]',
+                    'button[aria-label*="Sidebar"]',
+                    '[data-testid="stSidebarCollapsedControl"] *[role="button"]'
+                ];
+                for (var i = 0; i < selectors.length; i++) {
+                    var el = doc.querySelector(selectors[i]);
+                    if (el) return el;
                 }
+                return null;
+            }
 
-                function updateBtnVisibility() {
-                    var sidebar = pd.querySelector('[data-testid="stSidebar"]');
-                    var btn = pd.getElementById('__tessera_expand_btn__') || createExpandBtn();
-                    if (!sidebar || !btn) return;
-                    // Sidebar collapsed = aria-expanded false, or it has collapsed class
-                    var isCollapsed = !sidebar || sidebar.getAttribute('aria-expanded') === 'false'
-                        || sidebar.style.display === 'none'
-                        || (sidebar.getAttribute('data-collapsed') === 'true');
-                    // Also check if sidebar is off-screen (Streamlit slides it away)
-                    var rect = sidebar.getBoundingClientRect();
-                    if (rect.width < 10 || rect.left < -100) isCollapsed = true;
-                    btn.style.setProperty('display', isCollapsed ? 'flex' : 'none', 'important');
-                }
+            function init() {
+                try {
+                    var pd = window.parent.document;
 
-                // Initial check
-                createExpandBtn();
+                    // Force dark mode
+                    pd.documentElement.setAttribute('data-theme', 'dark');
+                    pd.body.setAttribute('data-theme', 'dark');
+                    var app = pd.querySelector('.stApp');
+                    if (app) app.setAttribute('data-theme', 'dark');
 
-                // Watch for sidebar DOM changes
-                var observer = new MutationObserver(updateBtnVisibility);
-                function startObserving() {
-                    var target = pd.body;
-                    if (target) {
-                        observer.observe(target, { attributes: true, subtree: true, childList: true, attributeFilter: ['style', 'class', 'aria-expanded', 'data-collapsed'] });
+                    // Create custom sidebar expand button
+                    function createExpandBtn() {
+                        var existing = pd.getElementById('__tessera_expand_btn__');
+                        if (existing) return existing;
+                        var btn = pd.createElement('button');
+                        btn.id = '__tessera_expand_btn__';
+                        btn.innerHTML = '&#x276F;&#x276F;';
+                        btn.title = 'Open sidebar';
+                        Object.assign(btn.style, {
+                            position: 'fixed',
+                            top: '12px',
+                            left: '12px',
+                            zIndex: '9999999',
+                            background: '#D62F3A',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '6px 12px',
+                            fontSize: '15px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            display: 'none',
+                            boxShadow: '0 4px 12px rgba(214,47,58,0.5)',
+                            lineHeight: '1.2'
+                        });
+                        btn.addEventListener('click', function() {
+                            var nativeBtn = findSidebarExpandBtn(pd);
+                            if (nativeBtn) {
+                                reactClick(nativeBtn);
+                            } else {
+                                // Fallback: toggle via session storage flag read on next render
+                                pd.dispatchEvent(new CustomEvent('tessera:open-sidebar'));
+                            }
+                        });
+                        pd.body.appendChild(btn);
+                        return btn;
                     }
+
+                    function isSidebarCollapsed() {
+                        var sidebar = pd.querySelector('[data-testid="stSidebar"]');
+                        if (!sidebar) return false;
+                        var rect = sidebar.getBoundingClientRect();
+                        // Collapsed when width is near-zero or pushed off-screen
+                        return rect.width < 20 || rect.left < -50;
+                    }
+
+                    function updateBtnVisibility() {
+                        var btn = createExpandBtn();
+                        btn.style.display = isSidebarCollapsed() ? 'flex' : 'none';
+                    }
+
+                    // Watch for DOM mutations (sidebar transitions)
+                    var observer = new MutationObserver(function() {
+                        updateBtnVisibility();
+                    });
+                    observer.observe(pd.body, { attributes: true, subtree: true, childList: true });
+
                     updateBtnVisibility();
-                }
-                startObserving();
-                setTimeout(updateBtnVisibility, 500);
-                setTimeout(updateBtnVisibility, 1500);
-                window.addEventListener('resize', updateBtnVisibility);
-            } catch(e) { console.log('tessera sidebar:', e); }
+                    setTimeout(updateBtnVisibility, 400);
+                    setTimeout(updateBtnVisibility, 1200);
+                    window.parent.addEventListener('resize', updateBtnVisibility);
+                } catch(e) { console.warn('tessera sidebar overlay:', e); }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
         })();
         </script>
-    """, height=0, width=0)
+    """)
 
     # Inject layout & header removal CSS
     st.markdown("""
