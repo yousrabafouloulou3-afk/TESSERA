@@ -114,13 +114,10 @@ def main():
     # Inject minimal modern CSS
     st.markdown("""
         <style>
-        /* Hide ONLY top-right action elements (Fork, GitHub, 3-dots menu), keeping left sidebar expand control visible! */
+        /* Hide Fork, GitHub links, 3-dots menu, while keeping left sidebar controls fully visible */
         .stAppDeployButton,
-        [data-testid="stHeaderActionElements"],
-        [data-testid="stToolbar"],
         [data-testid="stHeader"] a[href*="github"],
-        [data-testid="stHeader"] button[aria-label*="Manage app"],
-        [data-testid="stHeader"] button[aria-label*="Options"] {
+        button[data-testid="stHeaderOverflowButton"] {
             display: none !important;
             visibility: hidden !important;
         }
@@ -138,36 +135,34 @@ def main():
             font-family: 'Inter', sans-serif;
         }
         
-        /* Modern 'Mosaic' Tabs (Red Aesthetic) */
+        /* Modern Red Mosaic Tabs Styling */
         [data-testid="stTabs"] [data-baseweb="tab-list"] {
-            gap: 2px;
-            background-color: transparent;
-            padding-bottom: 0px;
+            gap: 8px !important;
+            background-color: transparent !important;
+            padding-bottom: 4px !important;
+            border-bottom: 2px solid rgba(214, 47, 58, 0.2) !important;
         }
         [data-testid="stTabs"] [data-baseweb="tab"] {
             background-color: rgba(128, 128, 128, 0.08) !important;
-            border: none !important;
-            border-radius: 0 !important;
-            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
-            margin-left: -10px;
-            padding: 10px 25px !important;
-            transition: all 0.3s ease;
-        }
-        [data-testid="stTabs"] [data-baseweb="tab"]:first-child {
-            clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%);
-            margin-left: 0;
+            border: 1px solid rgba(128, 128, 128, 0.2) !important;
+            border-radius: 6px 6px 0 0 !important;
+            padding: 8px 20px !important;
+            transition: all 0.2s ease-in-out !important;
         }
         [data-testid="stTabs"] [data-baseweb="tab"]:hover {
             background-color: rgba(214, 47, 58, 0.12) !important;
+            border-color: rgba(214, 47, 58, 0.4) !important;
         }
         [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
-            background-color: rgba(214, 47, 58, 0.18) !important;
-            border-bottom: 3px solid #D62F3A !important;
-            box-shadow: inset 0 -10px 20px -10px rgba(214, 47, 58, 0.4);
+            background-color: #D62F3A !important;
+            border: 1px solid #D62F3A !important;
+            box-shadow: 0 4px 12px rgba(214, 47, 58, 0.3) !important;
         }
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] * {
-            color: #D62F3A !important;
-            font-weight: 600 !important;
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] *,
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] p,
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] span {
+            color: #ffffff !important;
+            font-weight: 700 !important;
         }
         </style>
     """, unsafe_allow_html=True)
