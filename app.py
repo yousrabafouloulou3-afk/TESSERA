@@ -73,16 +73,23 @@ def main():
             font-family: 'Inter', sans-serif;
         }
         
+        /* Ensure left sidebar container is always visible */
+        [data-testid="stSidebar"], section[data-testid="stSidebar"] {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
         /* Modern 'Mosaic' Tabs (Angled Parallelogram Red Aesthetic for Sections) */
-        [data-testid="stTabs"] [data-baseweb="tab-list"] {
+        [data-testid="stTabs"] [data-baseweb="tab-list"], div[data-baseweb="tab-list"] {
             gap: 6px !important;
             background-color: transparent !important;
             padding-bottom: 2px !important;
-            border-bottom: 2px solid rgba(214, 47, 58, 0.3) !important;
+            border-bottom: 2px solid rgba(214, 47, 58, 0.4) !important;
         }
-        [data-testid="stTabs"] [data-baseweb="tab"] {
-            background-color: rgba(128, 128, 128, 0.12) !important;
-            border: 1px solid rgba(128, 128, 128, 0.2) !important;
+        [data-testid="stTabs"] [data-baseweb="tab"], div[data-baseweb="tab"], button[role="tab"] {
+            background-color: rgba(128, 128, 128, 0.15) !important;
+            border: 1px solid rgba(128, 128, 128, 0.25) !important;
             border-bottom: none !important;
             border-radius: 6px 6px 0 0 !important;
             transform: skewX(-12deg) !important;
@@ -90,20 +97,24 @@ def main():
             padding: 8px 22px !important;
             transition: all 0.2s ease !important;
         }
-        [data-testid="stTabs"] [data-baseweb="tab"] * {
+        [data-testid="stTabs"] [data-baseweb="tab"] *, div[data-baseweb="tab"] *, button[role="tab"] * {
             transform: skewX(12deg) !important;
             color: #a0a5b5 !important;
         }
-        [data-testid="stTabs"] [data-baseweb="tab"]:hover {
-            background-color: rgba(214, 47, 58, 0.15) !important;
-            border-color: rgba(214, 47, 58, 0.4) !important;
+        [data-testid="stTabs"] [data-baseweb="tab"]:hover, button[role="tab"]:hover {
+            background-color: rgba(214, 47, 58, 0.2) !important;
+            border-color: rgba(214, 47, 58, 0.5) !important;
         }
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"],
+        div[data-baseweb="tab"][aria-selected="true"],
+        button[role="tab"][aria-selected="true"] {
             background-color: #D62F3A !important;
             border-color: #D62F3A !important;
             box-shadow: 0 4px 12px rgba(214, 47, 58, 0.4) !important;
         }
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] * {
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] *,
+        div[data-baseweb="tab"][aria-selected="true"] *,
+        button[role="tab"][aria-selected="true"] * {
             color: #ffffff !important;
             font-weight: 700 !important;
         }
