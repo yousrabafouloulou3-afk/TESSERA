@@ -133,15 +133,6 @@ def main():
             background: transparent !important;
         }
 
-        /* ── Force Sidebar Always Visible ── */
-        section[data-testid="stSidebar"] {
-            display: flex !important;
-            visibility: visible !important;
-            min-width: 244px !important;
-            transform: none !important;
-            left: 0 !important;
-        }
-
 
         /* ── Sidebar Collapse button (<<) ── */
         [data-testid="stSidebarHeader"] button,
