@@ -35,7 +35,7 @@ def main():
 
     import streamlit.components.v1 as components
 
-    # Make native Dark Mode permanent
+    # Make native Dark Mode permanent & auto-expand sidebar on initial load
     components.html("""
         <script>
             try {
@@ -44,6 +44,16 @@ def main():
                 parentDoc.body.setAttribute('data-theme', 'dark');
                 var app = parentDoc.querySelector('.stApp');
                 if (app) app.setAttribute('data-theme', 'dark');
+
+                function openSidebarIfCollapsed() {
+                    var sidebar = parentDoc.querySelector('[data-testid="stSidebar"]');
+                    var expandBtn = parentDoc.querySelector('[data-testid="stSidebarCollapsedControl"] button, button[aria-label*="sidebar"], button[aria-label*="Sidebar"]');
+                    if (sidebar && sidebar.getAttribute('aria-expanded') === 'false' && expandBtn) {
+                        expandBtn.click();
+                    }
+                }
+                openSidebarIfCollapsed();
+                setTimeout(openSidebarIfCollapsed, 300);
             } catch(e) {}
         </script>
     """, height=0, width=0)
