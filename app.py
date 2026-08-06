@@ -55,24 +55,48 @@ def main():
             :root, html, body, .stApp {
                 color-scheme: dark !important;
                 --background-color: #0e1117 !important;
-                --secondary-background-color: #161920 !important;
+                --secondary-background-color: #262730 !important;
                 --text-color: #ffffff !important;
                 --primary-color: #D62F3A !important;
             }
-            html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+            html, body, .stApp, [data-testid="stAppViewContainer"] {
                 background-color: #0e1117 !important;
                 color: #ffffff !important;
             }
-            [data-testid="stSidebar"] {
-                background-color: #161920 !important;
+            [data-testid="stSidebar"], [data-testid="stSidebar"] > div {
+                background-color: #262730 !important;
             }
-            div[data-baseweb="select"] > div, input, textarea {
-                background-color: #1e222d !important;
+            [data-testid="stSidebar"] *, [data-testid="stSidebar"] label, [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
                 color: #ffffff !important;
-                border-color: #333a4a !important;
             }
-            div[data-baseweb="popover"] > div, div[data-baseweb="menu"] {
-                background-color: #1e222d !important;
+            h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
+                color: #ffffff !important;
+            }
+            div[data-baseweb="select"] > div, 
+            div[data-baseweb="input"], 
+            input, 
+            textarea {
+                background-color: #262730 !important;
+                color: #ffffff !important;
+                border: 1px solid #41444c !important;
+            }
+            div[data-baseweb="popover"] > div, 
+            div[data-baseweb="popover"] ul,
+            div[data-baseweb="menu"] {
+                background-color: #262730 !important;
+                border: 1px solid #41444c !important;
+                color: #ffffff !important;
+            }
+            div[data-baseweb="popover"] li,
+            div[data-baseweb="menu"] [role="option"] {
+                color: #ffffff !important;
+                background-color: #262730 !important;
+            }
+            div[data-baseweb="popover"] li:hover,
+            div[data-baseweb="menu"] [role="option"]:hover {
+                background-color: #363945 !important;
+            }
+            div[data-testid="stRadio"] label, div[data-testid="stRadio"] p, div[data-testid="stRadio"] span {
                 color: #ffffff !important;
             }
             </style>
@@ -93,13 +117,20 @@ def main():
     # Inject minimal modern CSS
     st.markdown("""
         <style>
+        /* Completely hide top header / right toolbar (Fork, GitHub icon, 3 dots menu) */
+        [data-testid="stHeader"], header[data-testid="stHeader"] {
+            display: none !important;
+        }
         .stAppDeployButton {display:none !important;}
+        footer {
+            visibility: hidden !important;
+            display: none !important;
+        }
         .stApp {
             background-color: transparent;
         }
         .main-header {
             font-family: 'Inter', sans-serif;
-            color: #2b2b2b;
         }
         
         /* Modern 'Mosaic' Tabs (Red Aesthetic) */
@@ -129,20 +160,6 @@ def main():
             border-bottom: 3px solid #D62F3A !important;
             box-shadow: inset 0 -10px 20px -10px rgba(214, 47, 58, 0.4);
         }
-        /* Hide Streamlit Default Menu and Footer */
-        footer {visibility: hidden !important;}
-        /* Hide Streamlit Cloud GitHub fork button */
-        .stAppDeployButton {display:none !important;}
-        [data-testid="stHeader"] a[href*="github.com"],
-        [data-testid="stHeader"] a[href*="github"],
-        .viewerBadge_container__1QSob,
-        .viewerBadge_link__qRIco,
-        #GithubIcon,
-        a[href*="github.com/yousrabafouloulou3-afk"],
-        button[kind="header"][aria-label*="GitHub"],
-        button[kind="header"][aria-label*="Fork"],
-        [data-testid="stToolbar"] a[href*="github"],
-        [data-testid="stDecoration"] {display: none !important;}
         </style>
     """, unsafe_allow_html=True)
 
