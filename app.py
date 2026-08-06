@@ -141,7 +141,7 @@ def main():
         }
         
         /* ══════════════════════════════════════════════════════
-           RED MOSAIC TABS — only targets section tabs, not action buttons
+           RED MOSAIC TABS — targets div[role="tab"] (Streamlit 1.56+)
            ══════════════════════════════════════════════════════ */
 
         /* Tab list bar */
@@ -155,10 +155,10 @@ def main():
             flex-wrap: wrap !important;
         }
 
-        /* Individual tab section buttons — inactive state (ONLY role="tab") */
-        div[data-testid="stTabs"] button[role="tab"],
+        /* Individual tab sections — inactive state */
+        [data-testid="stTabs"] [role="tab"],
         [data-testid="stTabs"] [data-baseweb="tab"],
-        .stTabs button[role="tab"] {
+        .stTabs [role="tab"] {
             background-color: rgba(214, 47, 58, 0.08) !important;
             border: 1px solid rgba(214, 47, 58, 0.3) !important;
             border-bottom: none !important;
@@ -167,26 +167,31 @@ def main():
             padding: 8px 20px !important;
             transition: all 0.2s ease-in-out !important;
             color: #c0c5d0 !important;
+            cursor: pointer !important;
         }
 
         /* Tab section text — inactive */
-        div[data-testid="stTabs"] button[role="tab"] p,
-        div[data-testid="stTabs"] button[role="tab"] span,
-        div[data-testid="stTabs"] button[role="tab"] *,
+        [data-testid="stTabs"] [role="tab"] p,
+        [data-testid="stTabs"] [role="tab"] span,
+        [data-testid="stTabs"] [role="tab"] *,
         [data-testid="stTabs"] [data-baseweb="tab"] * {
             color: #a0a5b5 !important;
         }
 
-        /* Hover — tabs only */
-        div[data-testid="stTabs"] button[role="tab"]:hover,
+        /* Hover */
+        [data-testid="stTabs"] [role="tab"]:hover,
         [data-testid="stTabs"] [data-baseweb="tab"]:hover {
             background-color: rgba(214, 47, 58, 0.2) !important;
             border-color: rgba(214, 47, 58, 0.6) !important;
             color: #ffffff !important;
         }
+        [data-testid="stTabs"] [role="tab"]:hover *,
+        [data-testid="stTabs"] [data-baseweb="tab"]:hover * {
+            color: #ffffff !important;
+        }
 
         /* Active / selected tab section */
-        div[data-testid="stTabs"] button[role="tab"][aria-selected="true"],
+        [data-testid="stTabs"] [role="tab"][aria-selected="true"],
         [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
             background-color: #D62F3A !important;
             border-color: #D62F3A !important;
@@ -195,16 +200,15 @@ def main():
         }
 
         /* Active tab section text */
-        div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] *,
+        [data-testid="stTabs"] [role="tab"][aria-selected="true"] *,
         [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] *,
-        div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] p,
-        div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] span {
+        [data-testid="stTabs"] [role="tab"][aria-selected="true"] p,
+        [data-testid="stTabs"] [role="tab"][aria-selected="true"] span {
             color: #ffffff !important;
             font-weight: 700 !important;
         }
 
-
-        /* Tab panel (content area) — subtle red left border to tie in the theme */
+        /* Tab panel (content area) — subtle red left border */
         [data-testid="stTabsTabPanel"],
         div[data-testid="stTabsTabPanel"] {
             border-left: 3px solid rgba(214, 47, 58, 0.25) !important;
