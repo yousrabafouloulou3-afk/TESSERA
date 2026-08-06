@@ -33,15 +33,20 @@ def main():
     if 'language' not in st.session_state:
         st.session_state.language = 'English'
 
-    # Restore sidebar auto-expand overlay JS (CSS-only approach was unreliable on Streamlit Cloud)
-    st.html("""
+    # Sidebar auto-expand: use components.html so we can target window.parent.document
+    # (st.html runs inside a height=0 iframe, so document != the main page)
+    import streamlit.components.v1 as components
+    components.html("""
         <script>
         (function() {
+            var doc = window.parent.document;
+
             function reactClick(el) {
                 ['mousedown', 'mouseup', 'click'].forEach(function(t) {
                     el.dispatchEvent(new MouseEvent(t, {bubbles: true, cancelable: true}));
                 });
             }
+
             function findExpandBtn() {
                 var sels = [
                     '[data-testid="stSidebarCollapsedControl"] button',
@@ -51,15 +56,23 @@ def main():
                     'button[aria-label*="Sidebar"]'
                 ];
                 for (var i = 0; i < sels.length; i++) {
-                    var el = document.querySelector(sels[i]);
+                    var el = doc.querySelector(sels[i]);
                     if (el) return el;
                 }
                 return null;
             }
+
+            function isCollapsed() {
+                var s = doc.querySelector('[data-testid="stSidebar"]');
+                if (!s) return true;
+                var r = s.getBoundingClientRect();
+                return r.width < 20 || r.left < -50;
+            }
+
             function createOverlayBtn() {
-                var b = document.getElementById('__tessera_sb__');
-                if (b) return b;
-                b = document.createElement('button');
+                var existing = doc.getElementById('__tessera_sb__');
+                if (existing) return existing;
+                var b = doc.createElement('button');
                 b.id = '__tessera_sb__';
                 b.innerHTML = '&#x276F;&#x276F;';
                 b.title = 'Open sidebar';
@@ -69,51 +82,47 @@ def main():
                     border:'none', borderRadius:'8px', padding:'6px 12px',
                     fontSize:'15px', fontWeight:'bold', cursor:'pointer',
                     display:'none', boxShadow:'0 4px 12px rgba(214,47,58,0.5)',
-                    lineHeight:'1.2'
+                    lineHeight:'1.2', alignItems:'center', justifyContent:'center'
                 });
                 b.addEventListener('click', function() {
                     var nb = findExpandBtn();
                     if (nb) reactClick(nb);
                 });
-                document.body.appendChild(b);
+                doc.body.appendChild(b);
                 return b;
             }
-            function isCollapsed() {
-                var s = document.querySelector('[data-testid="stSidebar"]');
-                if (!s) return false;
-                var r = s.getBoundingClientRect();
-                return r.width < 20 || r.left < -50;
-            }
+
             function sync() {
                 var b = createOverlayBtn();
                 b.style.display = isCollapsed() ? 'flex' : 'none';
             }
+
             function autoExpand() {
                 if (isCollapsed()) {
                     var nb = findExpandBtn();
-                    if (nb) reactClick(nb);
+                    if (nb) { reactClick(nb); }
                 }
             }
+
             function init() {
-                document.documentElement.setAttribute('data-theme','dark');
-                document.body.setAttribute('data-theme','dark');
-                var a = document.querySelector('.stApp');
-                if (a) a.setAttribute('data-theme','dark');
                 createOverlayBtn();
-                new MutationObserver(sync).observe(document.body, {attributes:true, subtree:true, childList:true});
+                new MutationObserver(sync).observe(doc.body, {attributes:true, subtree:true, childList:true});
                 sync();
-                // Auto-expand sidebar on first load
-                setTimeout(autoExpand, 400);
-                setTimeout(autoExpand, 1200);
-                setTimeout(sync, 400);
-                setTimeout(sync, 1200);
-                window.addEventListener('resize', sync);
+                // Auto-expand on first load — try several times to beat Streamlit's re-renders
+                setTimeout(autoExpand, 300);
+                setTimeout(autoExpand, 800);
+                setTimeout(autoExpand, 1500);
+                setTimeout(sync, 300);
+                setTimeout(sync, 800);
+                setTimeout(sync, 1500);
+                window.parent.addEventListener('resize', sync);
             }
-            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+
+            if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init);
             else init();
         })();
         </script>
-    """)
+    """, height=0)
 
     # Inject layout & header removal CSS
     st.markdown("""
@@ -122,6 +131,15 @@ def main():
         [data-testid="stHeader"] {
             background-color: transparent !important;
             background: transparent !important;
+        }
+
+        /* ── Force Sidebar Always Visible ── */
+        section[data-testid="stSidebar"] {
+            display: flex !important;
+            visibility: visible !important;
+            min-width: 244px !important;
+            transform: none !important;
+            left: 0 !important;
         }
 
 
