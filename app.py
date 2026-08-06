@@ -46,12 +46,11 @@ def main():
 
 
         /* ── Sidebar Expand button (>>) ── */
-        /* Style the native Streamlit expand button red — works across all Streamlit versions */
+        /* Only target the EXPAND control (shown when sidebar is collapsed), NOT the collapse button */
         [data-testid="stSidebarCollapsedControl"],
-        [data-testid="stSidebarCollapseButton"],
         [data-testid="collapsedControl"],
         div[data-testid="stSidebarCollapsedControl"],
-        div[data-testid="stSidebarCollapseButton"] {
+        div[data-testid="collapsedControl"] {
             display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
@@ -63,7 +62,6 @@ def main():
         }
 
         [data-testid="stSidebarCollapsedControl"] button,
-        [data-testid="stSidebarCollapseButton"] button,
         [data-testid="collapsedControl"] button {
             display: flex !important;
             visibility: visible !important;
@@ -82,8 +80,8 @@ def main():
 
         [data-testid="stSidebarCollapsedControl"] button svg,
         [data-testid="stSidebarCollapsedControl"] button path,
-        [data-testid="stSidebarCollapseButton"] button svg,
-        [data-testid="stSidebarCollapseButton"] button path {
+        [data-testid="collapsedControl"] button svg,
+        [data-testid="collapsedControl"] button path {
             fill: #ffffff !important;
             stroke: #ffffff !important;
             color: #ffffff !important;
