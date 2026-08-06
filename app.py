@@ -41,14 +41,17 @@ def main():
         (function() {
             var doc = window.parent.document;
 
+            // Remove any stale overlay button from previous runs/versions
+            var old = doc.getElementById('__tessera_sb__');
+            if (old) old.remove();
+
             // Prevent duplicate initialisation across Streamlit reruns
             if (doc.__tessera_sb_init__) return;
             doc.__tessera_sb_init__ = true;
 
-            // Click a React-managed button reliably
+            // Click a React-managed button reliably (only for auto-expand on load)
             function clickReactButton(btn) {
                 if (!btn) return false;
-                // Method 1 — invoke React's own onClick via internal fiber props
                 var keys = Object.keys(btn);
                 for (var i = 0; i < keys.length; i++) {
                     if (keys[i].startsWith('__reactProps$') || keys[i].startsWith('__reactEvents$')) {
@@ -59,7 +62,6 @@ def main():
                         }
                     }
                 }
-                // Method 2 — walk React fiber tree for onClick
                 for (var i = 0; i < keys.length; i++) {
                     if (keys[i].startsWith('__reactFiber$') || keys[i].startsWith('__reactInternalInstance$')) {
                         var fiber = btn[keys[i]];
@@ -73,7 +75,6 @@ def main():
                         }
                     }
                 }
-                // Method 3 — plain native .click()
                 btn.click();
                 return true;
             }
@@ -102,48 +103,18 @@ def main():
                 return r.width < 20 || r.left < -50;
             }
 
-            // Build overlay button
-            var overlay = doc.createElement('button');
-            overlay.id = '__tessera_sb__';
-            overlay.innerHTML = '&#x276F;&#x276F;';
-            overlay.title = 'Open sidebar';
-            Object.assign(overlay.style, {
-                position:'fixed', top:'12px', left:'12px',
-                zIndex:'9999999', background:'#D62F3A', color:'#fff',
-                border:'none', borderRadius:'8px', padding:'6px 12px',
-                fontSize:'15px', fontWeight:'bold', cursor:'pointer',
-                display:'none', boxShadow:'0 4px 12px rgba(214,47,58,0.5)',
-                lineHeight:'1.2', alignItems:'center', justifyContent:'center'
-            });
-            overlay.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                var btn = findExpandBtn();
-                clickReactButton(btn);
-            });
-            // Remove any stale overlay from previous hot-reload
-            var old = doc.getElementById('__tessera_sb__');
-            if (old) old.remove();
-            doc.body.appendChild(overlay);
-
-            function sync() {
-                overlay.style.display = isCollapsed() ? 'flex' : 'none';
-            }
-
             function autoExpand() {
                 if (isCollapsed()) {
                     var btn = findExpandBtn();
-                    clickReactButton(btn);
+                    if (btn) clickReactButton(btn);
                 }
             }
 
-            new MutationObserver(sync).observe(doc.body, {attributes:true, subtree:true, childList:true});
-            sync();
+            // Auto-expand on first load — try several times to beat Streamlit's re-renders
             setTimeout(autoExpand, 300);
             setTimeout(autoExpand, 800);
             setTimeout(autoExpand, 1500);
-            setTimeout(sync, 2000);
-            window.parent.addEventListener('resize', sync);
+            setTimeout(autoExpand, 3000);
         })();
         </script>
     """, height=0)
