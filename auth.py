@@ -70,7 +70,7 @@ def login_screen():
                 from database import get_db_connection
                 conn = get_db_connection()
                 c = conn.cursor()
-                c.execute("SELECT * FROM Users WHERE username=? AND password=?", (username, password))
+                c.execute("SELECT * FROM Users WHERE username=%s AND password=%s", (username, password))
                 user_row = c.fetchone()
                 conn.close()
                 
@@ -199,15 +199,14 @@ def login_screen():
                         else:
                             target_role = "admin" if role == "Administration" else "teacher" if role == "Professor" else "delegate" if (role == "Student" and is_delegate) else "student"
 
-                            import sqlite3
                             try:
                                 # Delete default teacher account if it exists
-                                c.execute("DELETE FROM Users WHERE role = 'teacher' AND linked_id = ? AND username = ?", (target_id, f"teacher_{target_id}"))
-                                c.execute("INSERT INTO Users (username, password, role, linked_id) VALUES (?, ?, ?, ?)", 
+                                c.execute("DELETE FROM Users WHERE role = 'teacher' AND linked_id = %s AND username = %s", (target_id, f"teacher_{target_id}"))
+                                c.execute("INSERT INTO Users (username, password, role, linked_id) VALUES (%s, %s, %s, %s)",
                                           (new_username, new_password, target_role, target_id))
                                 conn.commit()
                                 st.success(tr("Account created successfully! Please switch to the Login tab."))
-                            except sqlite3.IntegrityError:
+                            except Exception:
                                 st.error(tr("Username already exists. Please choose a different one."))
             conn.close()
 
