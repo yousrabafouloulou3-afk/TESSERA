@@ -144,6 +144,18 @@ def main():
         }
         /* Hide Streamlit Default Menu and Footer */
         footer {visibility: hidden !important;}
+        /* Hide Streamlit Cloud GitHub fork button */
+        .stAppDeployButton {display:none !important;}
+        [data-testid="stHeader"] a[href*="github.com"],
+        [data-testid="stHeader"] a[href*="github"],
+        .viewerBadge_container__1QSob,
+        .viewerBadge_link__qRIco,
+        #GithubIcon,
+        a[href*="github.com/yousrabafouloulou3-afk"],
+        button[kind="header"][aria-label*="GitHub"],
+        button[kind="header"][aria-label*="Fork"],
+        [data-testid="stToolbar"] a[href*="github"],
+        [data-testid="stDecoration"] {display: none !important;}
         </style>
     """, unsafe_allow_html=True)
 
