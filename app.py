@@ -62,14 +62,30 @@ def main():
     # Inject layout & header removal CSS
     st.markdown("""
         <style>
-        /* Force Left Sidebar to be permanently visible */
+        /* Force Left Sidebar to be permanently visible and docked on screen */
         [data-testid="stSidebar"], 
         section[data-testid="stSidebar"],
         div[data-testid="stSidebar"] {
             display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
-            min-width: 250px !important;
+            transform: none !important;
+            margin-left: 0 !important;
+            left: 0 !important;
+            position: fixed !important;
+            top: 0 !important;
+            bottom: 0 !important;
+            width: 280px !important;
+            min-width: 280px !important;
+            z-index: 100000 !important;
+            background-color: #262730 !important;
+        }
+
+        /* Adjust main container to give space for fixed left sidebar */
+        [data-testid="stAppViewContainer"] > section:nth-child(2),
+        [data-testid="stMain"],
+        .stMain {
+            margin-left: 280px !important;
         }
 
         /* Visible bright red sidebar toggle button if collapsed */
