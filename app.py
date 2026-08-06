@@ -158,15 +158,6 @@ def main():
         }
 
 
-        /* ── Sidebar Collapse button (<<) ── */
-        [data-testid="stSidebarHeader"] button,
-        section[data-testid="stSidebar"] button[kind="header"] {
-            visibility: visible !important;
-            opacity: 1 !important;
-            display: flex !important;
-            pointer-events: auto !important;
-        }
-
         /* ── Sidebar Expand button (>>) — shown when sidebar is collapsed ── */
         /* Streamlit renders this div only when collapsed; we pin it top-left and style it red */
         [data-testid="stSidebarCollapsedControl"],
