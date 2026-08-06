@@ -33,27 +33,60 @@ def main():
     if 'language' not in st.session_state:
         st.session_state.language = 'English'
 
-    # Sidebar auto-expand: use components.html so we can target window.parent.document
-    # (st.html runs inside a height=0 iframe, so document != the main page)
+    # Sidebar auto-expand: use components.html so JS runs in an iframe
+    # but targets window.parent.document (the actual Streamlit page).
     import streamlit.components.v1 as components
     components.html("""
         <script>
         (function() {
             var doc = window.parent.document;
 
-            function reactClick(el) {
-                ['mousedown', 'mouseup', 'click'].forEach(function(t) {
-                    el.dispatchEvent(new MouseEvent(t, {bubbles: true, cancelable: true}));
-                });
+            // Prevent duplicate initialisation across Streamlit reruns
+            if (doc.__tessera_sb_init__) return;
+            doc.__tessera_sb_init__ = true;
+
+            // Click a React-managed button reliably
+            function clickReactButton(btn) {
+                if (!btn) return false;
+                // Method 1 — invoke React's own onClick via internal fiber props
+                var keys = Object.keys(btn);
+                for (var i = 0; i < keys.length; i++) {
+                    if (keys[i].startsWith('__reactProps$') || keys[i].startsWith('__reactEvents$')) {
+                        var props = btn[keys[i]];
+                        if (props && props.onClick) {
+                            props.onClick(new MouseEvent('click', {bubbles:true, cancelable:true}));
+                            return true;
+                        }
+                    }
+                }
+                // Method 2 — walk React fiber tree for onClick
+                for (var i = 0; i < keys.length; i++) {
+                    if (keys[i].startsWith('__reactFiber$') || keys[i].startsWith('__reactInternalInstance$')) {
+                        var fiber = btn[keys[i]];
+                        var limit = 20;
+                        while (fiber && limit-- > 0) {
+                            if (fiber.memoizedProps && fiber.memoizedProps.onClick) {
+                                fiber.memoizedProps.onClick(new MouseEvent('click', {bubbles:true}));
+                                return true;
+                            }
+                            fiber = fiber.return;
+                        }
+                    }
+                }
+                // Method 3 — plain native .click()
+                btn.click();
+                return true;
             }
 
             function findExpandBtn() {
                 var sels = [
                     '[data-testid="stSidebarCollapsedControl"] button',
+                    '[data-testid="collapsedControl"] button',
                     'button[aria-label="Open sidebar"]',
                     'button[aria-label="open sidebar"]',
                     'button[aria-label*="sidebar"]',
-                    'button[aria-label*="Sidebar"]'
+                    'button[aria-label*="Sidebar"]',
+                    'button[aria-label="Open sidebar navigation"]'
                 ];
                 for (var i = 0; i < sels.length; i++) {
                     var el = doc.querySelector(sels[i]);
@@ -69,57 +102,48 @@ def main():
                 return r.width < 20 || r.left < -50;
             }
 
-            function createOverlayBtn() {
-                var existing = doc.getElementById('__tessera_sb__');
-                if (existing) return existing;
-                var b = doc.createElement('button');
-                b.id = '__tessera_sb__';
-                b.innerHTML = '&#x276F;&#x276F;';
-                b.title = 'Open sidebar';
-                Object.assign(b.style, {
-                    position:'fixed', top:'12px', left:'12px',
-                    zIndex:'9999999', background:'#D62F3A', color:'#fff',
-                    border:'none', borderRadius:'8px', padding:'6px 12px',
-                    fontSize:'15px', fontWeight:'bold', cursor:'pointer',
-                    display:'none', boxShadow:'0 4px 12px rgba(214,47,58,0.5)',
-                    lineHeight:'1.2', alignItems:'center', justifyContent:'center'
-                });
-                b.addEventListener('click', function() {
-                    var nb = findExpandBtn();
-                    if (nb) reactClick(nb);
-                });
-                doc.body.appendChild(b);
-                return b;
-            }
+            // Build overlay button
+            var overlay = doc.createElement('button');
+            overlay.id = '__tessera_sb__';
+            overlay.innerHTML = '&#x276F;&#x276F;';
+            overlay.title = 'Open sidebar';
+            Object.assign(overlay.style, {
+                position:'fixed', top:'12px', left:'12px',
+                zIndex:'9999999', background:'#D62F3A', color:'#fff',
+                border:'none', borderRadius:'8px', padding:'6px 12px',
+                fontSize:'15px', fontWeight:'bold', cursor:'pointer',
+                display:'none', boxShadow:'0 4px 12px rgba(214,47,58,0.5)',
+                lineHeight:'1.2', alignItems:'center', justifyContent:'center'
+            });
+            overlay.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var btn = findExpandBtn();
+                clickReactButton(btn);
+            });
+            // Remove any stale overlay from previous hot-reload
+            var old = doc.getElementById('__tessera_sb__');
+            if (old) old.remove();
+            doc.body.appendChild(overlay);
 
             function sync() {
-                var b = createOverlayBtn();
-                b.style.display = isCollapsed() ? 'flex' : 'none';
+                overlay.style.display = isCollapsed() ? 'flex' : 'none';
             }
 
             function autoExpand() {
                 if (isCollapsed()) {
-                    var nb = findExpandBtn();
-                    if (nb) { reactClick(nb); }
+                    var btn = findExpandBtn();
+                    clickReactButton(btn);
                 }
             }
 
-            function init() {
-                createOverlayBtn();
-                new MutationObserver(sync).observe(doc.body, {attributes:true, subtree:true, childList:true});
-                sync();
-                // Auto-expand on first load — try several times to beat Streamlit's re-renders
-                setTimeout(autoExpand, 300);
-                setTimeout(autoExpand, 800);
-                setTimeout(autoExpand, 1500);
-                setTimeout(sync, 300);
-                setTimeout(sync, 800);
-                setTimeout(sync, 1500);
-                window.parent.addEventListener('resize', sync);
-            }
-
-            if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init);
-            else init();
+            new MutationObserver(sync).observe(doc.body, {attributes:true, subtree:true, childList:true});
+            sync();
+            setTimeout(autoExpand, 300);
+            setTimeout(autoExpand, 800);
+            setTimeout(autoExpand, 1500);
+            setTimeout(sync, 2000);
+            window.parent.addEventListener('resize', sync);
         })();
         </script>
     """, height=0)
