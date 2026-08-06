@@ -52,12 +52,12 @@ def main():
         """, height=0, width=0)
         st.markdown("""
             <style>
-            :root, html, body, .stApp {
-                color-scheme: dark !important;
+            :root, html, body, #root, .stApp, [data-testid="stAppViewContainer"], [data-testid="stSidebar"], [data-testid="stDataEditor"], [data-testid="stDataFrame"] {
                 --background-color: #0e1117 !important;
                 --secondary-background-color: #262730 !important;
                 --text-color: #ffffff !important;
                 --primary-color: #D62F3A !important;
+                color-scheme: dark !important;
             }
             html, body, .stApp, [data-testid="stAppViewContainer"] {
                 background-color: #0e1117 !important;
@@ -66,7 +66,10 @@ def main():
             [data-testid="stSidebar"], [data-testid="stSidebar"] > div {
                 background-color: #262730 !important;
             }
-            [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+            [data-testid="stSidebar"] *, [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label, [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+                color: #ffffff !important;
+            }
+            h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
                 color: #ffffff !important;
             }
             div[data-baseweb="select"] > div, 
@@ -75,13 +78,14 @@ def main():
             textarea {
                 background-color: #262730 !important;
                 color: #ffffff !important;
-                border: 1px solid #41444c !important;
+                border: 1px solid #31333f !important;
+                border-radius: 8px !important;
             }
             div[data-baseweb="popover"] > div, 
             div[data-baseweb="popover"] ul,
             div[data-baseweb="menu"] {
                 background-color: #262730 !important;
-                border: 1px solid #41444c !important;
+                border: 1px solid #31333f !important;
                 color: #ffffff !important;
             }
             div[data-baseweb="popover"] li,
@@ -93,8 +97,37 @@ def main():
             div[data-baseweb="menu"] [role="option"]:hover {
                 background-color: #363945 !important;
             }
+            [data-testid="stDataFrame"], [data-testid="stDataEditor"], div[data-testid="stDataEditor"] > div {
+                background-color: #262730 !important;
+                color: #ffffff !important;
+            }
+            [data-testid="stDataEditor"] *, [data-testid="stDataFrame"] * {
+                background-color: #262730 !important;
+                color: #ffffff !important;
+            }
             div[data-testid="stRadio"] label, div[data-testid="stRadio"] p, div[data-testid="stRadio"] span {
                 color: #ffffff !important;
+            }
+            [data-testid="stTabs"] [data-baseweb="tab-list"] {
+                gap: 16px !important;
+                background-color: transparent !important;
+                border-bottom: 1px solid #31333f !important;
+            }
+            [data-testid="stTabs"] [data-baseweb="tab"] {
+                background-color: transparent !important;
+                border: none !important;
+                padding: 8px 16px !important;
+            }
+            [data-testid="stTabs"] [data-baseweb="tab"] * {
+                color: #808495 !important;
+            }
+            [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
+                border-bottom: 2px solid #D62F3A !important;
+                background-color: transparent !important;
+            }
+            [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] * {
+                color: #D62F3A !important;
+                font-weight: 600 !important;
             }
             </style>
         """, unsafe_allow_html=True)
@@ -114,15 +147,19 @@ def main():
     # Inject minimal modern CSS
     st.markdown("""
         <style>
-        /* Hide Fork, GitHub links, 3-dots menu, while keeping left sidebar controls fully visible */
-        .stAppDeployButton,
-        [data-testid="stHeader"] a[href*="github"],
-        button[data-testid="stHeaderOverflowButton"] {
+        /* Completely hide top right header toolbar (Fork, GitHub link, 3 dots menu) in Streamlit 1.61+ */
+        header[data-testid="stHeader"],
+        [data-testid="stHeader"],
+        .stAppHeader,
+        [data-testid="stHeaderActionElements"],
+        [data-testid="stToolbar"],
+        .stAppDeployButton {
             display: none !important;
+            height: 0 !important;
+            min-height: 0 !important;
             visibility: hidden !important;
-        }
-        [data-testid="stHeader"] {
-            background: transparent !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
         footer {
             visibility: hidden !important;
@@ -133,36 +170,6 @@ def main():
         }
         .main-header {
             font-family: 'Inter', sans-serif;
-        }
-        
-        /* Modern Red Mosaic Tabs Styling */
-        [data-testid="stTabs"] [data-baseweb="tab-list"] {
-            gap: 8px !important;
-            background-color: transparent !important;
-            padding-bottom: 4px !important;
-            border-bottom: 2px solid rgba(214, 47, 58, 0.2) !important;
-        }
-        [data-testid="stTabs"] [data-baseweb="tab"] {
-            background-color: rgba(128, 128, 128, 0.08) !important;
-            border: 1px solid rgba(128, 128, 128, 0.2) !important;
-            border-radius: 6px 6px 0 0 !important;
-            padding: 8px 20px !important;
-            transition: all 0.2s ease-in-out !important;
-        }
-        [data-testid="stTabs"] [data-baseweb="tab"]:hover {
-            background-color: rgba(214, 47, 58, 0.12) !important;
-            border-color: rgba(214, 47, 58, 0.4) !important;
-        }
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
-            background-color: #D62F3A !important;
-            border: 1px solid #D62F3A !important;
-            box-shadow: 0 4px 12px rgba(214, 47, 58, 0.3) !important;
-        }
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] *,
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] p,
-        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] span {
-            color: #ffffff !important;
-            font-weight: 700 !important;
         }
         </style>
     """, unsafe_allow_html=True)
