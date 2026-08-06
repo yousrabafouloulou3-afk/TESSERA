@@ -150,6 +150,8 @@ def init_db():
     ''')
     c.execute('ALTER TABLE Users ADD COLUMN IF NOT EXISTS linked_level TEXT')
 
+    # Re‑create Entities table with proper SERIAL primary key (ensures auto‑generated IDs)
+    c.execute('DROP TABLE IF EXISTS Entities CASCADE')
     c.execute('''
         CREATE TABLE IF NOT EXISTS Entities (
             ID_E SERIAL PRIMARY KEY,
