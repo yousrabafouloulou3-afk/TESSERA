@@ -56,7 +56,9 @@ def main():
             background-color: transparent !important;
             background: transparent !important;
         }
+        /* Sidebar Expand / Collapse Toggle Buttons (<< and >>) */
         [data-testid="stSidebarCollapsedControl"],
+        [data-testid="stSidebarCollapsedControl"] button,
         [data-testid="stSidebarHeader"] button,
         button[aria-label*="sidebar"],
         button[aria-label*="Sidebar"] {
@@ -64,13 +66,14 @@ def main():
             visibility: visible !important;
             opacity: 1 !important;
             color: #ffffff !important;
+            z-index: 999999 !important;
+            pointer-events: auto !important;
         }
 
-        /* Hide ONLY top-right buttons (Fork, GitHub link, 3 dots menu) */
+        /* Hide ONLY top-right action buttons (Fork app, Deploy button, GitHub link) */
         .stAppDeployButton,
         [data-testid="stToolbar"],
-        [data-testid="stHeader"] a[href*="github"],
-        button[data-testid="stHeaderOverflowButton"] {
+        [data-testid="stHeader"] a[href*="github"] {
             display: none !important;
             visibility: hidden !important;
         }
