@@ -61,8 +61,8 @@ def sync_student_entities(level, specs_data):
                     section_id = existing_sections[section_idx]['ID_E']
                     c.execute("UPDATE Entities SET nameE=? WHERE ID_E=?", (section_name, section_id))
                 else:
-                    c.execute("INSERT INTO Entities (typeE, sectionID, nameE, specialite) VALUES (?, ?, ?, ?)", (1, 0, section_name, target_spec_name))
-                    section_id = c.lastrowid
+                    c.execute("INSERT INTO Entities (typeE, sectionID, nameE, specialite) VALUES (?, ?, ?, ?) RETURNING ID_E", (1, 0, section_name, target_spec_name))
+                    section_id = c.fetchone()['ID_E']
                     c.execute("INSERT OR IGNORE INTO Users (username, password, role, linked_id) VALUES (?, ?, 'student', ?)", (f"student_{section_id}", "student123", section_id))
                 
                 c.execute("SELECT ID_E FROM Entities WHERE typeE=0 AND sectionID=? ORDER BY ID_E ASC", (section_id,))
@@ -75,8 +75,8 @@ def sync_student_entities(level, specs_data):
                         group_id = existing_groups[g]['ID_E']
                         c.execute("UPDATE Entities SET nameE=? WHERE ID_E=?", (group_name, group_id))
                     else:
-                        c.execute("INSERT INTO Entities (typeE, sectionID, nameE, specialite) VALUES (?, ?, ?, ?)", (0, section_id, group_name, target_spec_name))
-                        group_id = c.lastrowid
+                        c.execute("INSERT INTO Entities (typeE, sectionID, nameE, specialite) VALUES (?, ?, ?, ?) RETURNING ID_E", (0, section_id, group_name, target_spec_name))
+                        group_id = c.fetchone()['ID_E']
                         c.execute("INSERT OR IGNORE INTO Users (username, password, role, linked_id) VALUES (?, ?, 'student', ?)", (f"student_{group_id}", "student123", group_id))
                 
                 # Delete excess groups
@@ -171,9 +171,9 @@ def save_professors(profs_data):
                     prof_id = row['ID_P']
                     c.execute("UPDATE Profs SET prof = ?, matricule = ? WHERE ID_P = ?", (p['is_prof'], p.get('matricule', ''), prof_id))
                 else:
-                    c.execute("INSERT INTO Profs (nameP, prof, specialite, matricule) VALUES (?, ?, ?, ?)", 
+                    c.execute("INSERT INTO Profs (nameP, prof, specialite, matricule) VALUES (?, ?, ?, ?) RETURNING ID_P",
                               (name_clean, p['is_prof'], p['specialite'], p.get('matricule', '')))
-                    prof_id = c.lastrowid
+                    prof_id = c.fetchone()['ID_P']
         conn.commit()
         return True
     except Exception as e:

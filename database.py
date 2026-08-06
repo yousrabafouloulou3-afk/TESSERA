@@ -150,7 +150,7 @@ def init_db():
 
     c.execute('''
         CREATE TABLE IF NOT EXISTS Entities (
-            ID_E INTEGER PRIMARY KEY,
+            ID_E SERIAL PRIMARY KEY,
             typeE INTEGER,
             sectionID INTEGER,
             nameE TEXT,
