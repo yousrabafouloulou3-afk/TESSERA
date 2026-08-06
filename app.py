@@ -75,6 +75,41 @@ def main():
         .main-header {
             font-family: 'Inter', sans-serif;
         }
+        
+        /* Modern 'Mosaic' Tabs (Red Aesthetic for Sections) */
+        [data-testid="stTabs"] [data-baseweb="tab-list"] {
+            gap: 2px !important;
+            background-color: transparent !important;
+            padding-bottom: 0px !important;
+            border-bottom: none !important;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"] {
+            background-color: rgba(128, 128, 128, 0.12) !important;
+            border: none !important;
+            border-radius: 0 !important;
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+            margin-left: -10px !important;
+            padding: 10px 25px !important;
+            transition: all 0.3s ease !important;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"]:first-child {
+            clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%) !important;
+            margin-left: 0 !important;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"]:hover {
+            background-color: rgba(214, 47, 58, 0.2) !important;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
+            background-color: rgba(214, 47, 58, 0.25) !important;
+            border-bottom: 3px solid #D62F3A !important;
+            box-shadow: inset 0 -10px 20px -10px rgba(214, 47, 58, 0.5) !important;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] *,
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] p,
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] span {
+            color: #ffffff !important;
+            font-weight: 600 !important;
+        }
         </style>
     """, unsafe_allow_html=True)
 
