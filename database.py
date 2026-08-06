@@ -43,7 +43,10 @@ class _CompatCursor:
 
     def fetchone(self):
         row = self._cur.fetchone()
-        return dict(row) if row is not None else None
+        if row is None:
+            return None
+        # Convert keys to upper case to match original SQLite style (e.g., ID_E)
+        return {k.upper(): v for k, v in dict(row).items()}
 
     def fetchall(self):
         return [dict(r) for r in self._cur.fetchall()]
@@ -151,16 +154,19 @@ def init_db():
     c.execute('ALTER TABLE Users ADD COLUMN IF NOT EXISTS linked_level TEXT')
 
     # Re‑create Entities table with proper SERIAL primary key (ensures auto‑generated IDs)
+    # Re‑create Entities table with proper SERIAL primary key (ensures auto‑generated IDs)
     c.execute('DROP TABLE IF EXISTS Entities CASCADE')
     c.execute('''
         CREATE TABLE IF NOT EXISTS Entities (
-            ID_E SERIAL PRIMARY KEY,
+            "ID_E" SERIAL PRIMARY KEY,
             typeE INTEGER,
             sectionID INTEGER,
             nameE TEXT,
             specialite TEXT
         )
     ''')
+    # Ensure the sequence default is set (no‑op if already SERIAL)
+    c.execute("ALTER TABLE Entities ALTER COLUMN ID_E SET DEFAULT nextval('entities_id_e_seq'::regclass)")
 
     c.execute('''
         CREATE TABLE IF NOT EXISTS Profs (
