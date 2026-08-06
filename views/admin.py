@@ -169,10 +169,10 @@ def save_professors(profs_data):
                 row = c.fetchone()
                 if row:
                     prof_id = row['ID_P']
-                    c.execute("UPDATE Profs SET prof = ?, matricule = ? WHERE ID_P = ?", (p['is_prof'], p.get('matricule', ''), prof_id))
+                    c.execute("UPDATE Profs SET prof = ?, matricule = ? WHERE ID_P = ?", (p['is_prof'], p.get('matricule') or None, prof_id))
                 else:
                     c.execute("INSERT INTO Profs (nameP, prof, specialite, matricule) VALUES (?, ?, ?, ?) RETURNING ID_P",
-                              (name_clean, p['is_prof'], p['specialite'], p.get('matricule', '')))
+                              (name_clean, p['is_prof'], p['specialite'], p.get('matricule') or None))
                     prof_id = c.fetchone()['ID_P']
         conn.commit()
         return True
