@@ -66,10 +66,7 @@ def main():
             [data-testid="stSidebar"], [data-testid="stSidebar"] > div {
                 background-color: #262730 !important;
             }
-            [data-testid="stSidebar"] *, [data-testid="stSidebar"] label, [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-                color: #ffffff !important;
-            }
-            h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
+            [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
                 color: #ffffff !important;
             }
             div[data-baseweb="select"] > div, 
@@ -117,11 +114,19 @@ def main():
     # Inject minimal modern CSS
     st.markdown("""
         <style>
-        /* Completely hide top header / right toolbar (Fork, GitHub icon, 3 dots menu) */
-        [data-testid="stHeader"], header[data-testid="stHeader"] {
+        /* Hide ONLY top-right action elements (Fork, GitHub, 3-dots menu), keeping left sidebar expand control visible! */
+        .stAppDeployButton,
+        [data-testid="stHeaderActionElements"],
+        [data-testid="stToolbar"],
+        [data-testid="stHeader"] a[href*="github"],
+        [data-testid="stHeader"] button[aria-label*="Manage app"],
+        [data-testid="stHeader"] button[aria-label*="Options"] {
             display: none !important;
+            visibility: hidden !important;
         }
-        .stAppDeployButton {display:none !important;}
+        [data-testid="stHeader"] {
+            background: transparent !important;
+        }
         footer {
             visibility: hidden !important;
             display: none !important;
@@ -140,7 +145,7 @@ def main():
             padding-bottom: 0px;
         }
         [data-testid="stTabs"] [data-baseweb="tab"] {
-            background-color: rgba(128, 128, 128, 0.05) !important;
+            background-color: rgba(128, 128, 128, 0.08) !important;
             border: none !important;
             border-radius: 0 !important;
             clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
@@ -153,12 +158,16 @@ def main():
             margin-left: 0;
         }
         [data-testid="stTabs"] [data-baseweb="tab"]:hover {
-            background-color: rgba(128, 128, 128, 0.1) !important;
+            background-color: rgba(214, 47, 58, 0.12) !important;
         }
         [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
-            background-color: rgba(214, 47, 58, 0.1) !important;
+            background-color: rgba(214, 47, 58, 0.18) !important;
             border-bottom: 3px solid #D62F3A !important;
             box-shadow: inset 0 -10px 20px -10px rgba(214, 47, 58, 0.4);
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] * {
+            color: #D62F3A !important;
+            font-weight: 600 !important;
         }
         </style>
     """, unsafe_allow_html=True)
