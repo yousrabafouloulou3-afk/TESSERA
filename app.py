@@ -33,120 +33,102 @@ def main():
     if 'language' not in st.session_state:
         st.session_state.language = 'English'
 
-    if 'night_mode' not in st.session_state:
-        st.session_state.night_mode = False
-
     import streamlit.components.v1 as components
 
-    if st.session_state.night_mode:
-        components.html("""
-            <script>
-                try {
-                    var parentDoc = window.parent.document;
-                    parentDoc.documentElement.setAttribute('data-theme', 'dark');
-                    parentDoc.body.setAttribute('data-theme', 'dark');
-                    var app = parentDoc.querySelector('.stApp');
-                    if (app) app.setAttribute('data-theme', 'dark');
-                } catch(e) {}
-            </script>
-        """, height=0, width=0)
-        st.markdown("""
-            <style>
-            :root, html, body, #root, .stApp, [data-testid="stAppViewContainer"], [data-testid="stSidebar"], [data-testid="stDataEditor"], [data-testid="stDataFrame"] {
-                --background-color: #0e1117 !important;
-                --secondary-background-color: #262730 !important;
-                --text-color: #ffffff !important;
-                --primary-color: #D62F3A !important;
-                color-scheme: dark !important;
-            }
-            html, body, .stApp, [data-testid="stAppViewContainer"] {
-                background-color: #0e1117 !important;
-                color: #ffffff !important;
-            }
-            [data-testid="stSidebar"], [data-testid="stSidebar"] > div {
-                background-color: #262730 !important;
-            }
-            [data-testid="stSidebar"] *, [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label, [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-                color: #ffffff !important;
-            }
-            h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
-                color: #ffffff !important;
-            }
-            div[data-baseweb="select"] > div, 
-            div[data-baseweb="input"], 
-            input, 
-            textarea {
-                background-color: #262730 !important;
-                color: #ffffff !important;
-                border: 1px solid #31333f !important;
-                border-radius: 8px !important;
-            }
-            div[data-baseweb="popover"] > div, 
-            div[data-baseweb="popover"] ul,
-            div[data-baseweb="menu"] {
-                background-color: #262730 !important;
-                border: 1px solid #31333f !important;
-                color: #ffffff !important;
-            }
-            div[data-baseweb="popover"] li,
-            div[data-baseweb="menu"] [role="option"] {
-                color: #ffffff !important;
-                background-color: #262730 !important;
-            }
-            div[data-baseweb="popover"] li:hover,
-            div[data-baseweb="menu"] [role="option"]:hover {
-                background-color: #363945 !important;
-            }
-            [data-testid="stDataFrame"], [data-testid="stDataEditor"], div[data-testid="stDataEditor"] > div {
-                background-color: #262730 !important;
-                color: #ffffff !important;
-            }
-            [data-testid="stDataEditor"] *, [data-testid="stDataFrame"] * {
-                background-color: #262730 !important;
-                color: #ffffff !important;
-            }
-            div[data-testid="stRadio"] label, div[data-testid="stRadio"] p, div[data-testid="stRadio"] span {
-                color: #ffffff !important;
-            }
-            [data-testid="stTabs"] [data-baseweb="tab-list"] {
-                gap: 16px !important;
-                background-color: transparent !important;
-                border-bottom: 1px solid #31333f !important;
-            }
-            [data-testid="stTabs"] [data-baseweb="tab"] {
-                background-color: transparent !important;
-                border: none !important;
-                padding: 8px 16px !important;
-            }
-            [data-testid="stTabs"] [data-baseweb="tab"] * {
-                color: #808495 !important;
-            }
-            [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
-                border-bottom: 2px solid #D62F3A !important;
-                background-color: transparent !important;
-            }
-            [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] * {
-                color: #D62F3A !important;
-                font-weight: 600 !important;
-            }
-            </style>
-        """, unsafe_allow_html=True)
-    else:
-        components.html("""
-            <script>
-                try {
-                    var parentDoc = window.parent.document;
-                    parentDoc.documentElement.setAttribute('data-theme', 'light');
-                    parentDoc.body.setAttribute('data-theme', 'light');
-                    var app = parentDoc.querySelector('.stApp');
-                    if (app) app.setAttribute('data-theme', 'light');
-                } catch(e) {}
-            </script>
-        """, height=0, width=0)
+    # Make native Dark Mode permanent
+    components.html("""
+        <script>
+            try {
+                var parentDoc = window.parent.document;
+                parentDoc.documentElement.setAttribute('data-theme', 'dark');
+                parentDoc.body.setAttribute('data-theme', 'dark');
+                var app = parentDoc.querySelector('.stApp');
+                if (app) app.setAttribute('data-theme', 'dark');
+            } catch(e) {}
+        </script>
+    """, height=0, width=0)
 
-    # Inject minimal modern CSS
+    # Inject permanent dark mode & layout CSS
     st.markdown("""
         <style>
+        :root, html, body, #root, .stApp, [data-testid="stAppViewContainer"], [data-testid="stSidebar"], [data-testid="stDataEditor"], [data-testid="stDataFrame"] {
+            --background-color: #0e1117 !important;
+            --secondary-background-color: #262730 !important;
+            --text-color: #ffffff !important;
+            --primary-color: #D62F3A !important;
+            color-scheme: dark !important;
+        }
+        html, body, .stApp, [data-testid="stAppViewContainer"] {
+            background-color: #0e1117 !important;
+            color: #ffffff !important;
+        }
+        [data-testid="stSidebar"], [data-testid="stSidebar"] > div {
+            background-color: #262730 !important;
+        }
+        [data-testid="stSidebar"] *, [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label, [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+            color: #ffffff !important;
+        }
+        h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
+            color: #ffffff !important;
+        }
+        div[data-baseweb="select"] > div, 
+        div[data-baseweb="input"], 
+        input, 
+        textarea {
+            background-color: #262730 !important;
+            color: #ffffff !important;
+            border: 1px solid #31333f !important;
+            border-radius: 8px !important;
+        }
+        div[data-baseweb="popover"] > div, 
+        div[data-baseweb="popover"] ul,
+        div[data-baseweb="menu"] {
+            background-color: #262730 !important;
+            border: 1px solid #31333f !important;
+            color: #ffffff !important;
+        }
+        div[data-baseweb="popover"] li,
+        div[data-baseweb="menu"] [role="option"] {
+            color: #ffffff !important;
+            background-color: #262730 !important;
+        }
+        div[data-baseweb="popover"] li:hover,
+        div[data-baseweb="menu"] [role="option"]:hover {
+            background-color: #363945 !important;
+        }
+        [data-testid="stDataFrame"], [data-testid="stDataEditor"], div[data-testid="stDataEditor"] > div {
+            background-color: #262730 !important;
+            color: #ffffff !important;
+        }
+        [data-testid="stDataEditor"] *, [data-testid="stDataFrame"] * {
+            background-color: #262730 !important;
+            color: #ffffff !important;
+        }
+        div[data-testid="stRadio"] label, div[data-testid="stRadio"] p, div[data-testid="stRadio"] span {
+            color: #ffffff !important;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab-list"] {
+            gap: 16px !important;
+            background-color: transparent !important;
+            border-bottom: 1px solid #31333f !important;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"] {
+            background-color: transparent !important;
+            border: none !important;
+            padding: 8px 16px !important;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"] * {
+            color: #808495 !important;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
+            border-bottom: 2px solid #D62F3A !important;
+            background-color: transparent !important;
+        }
+        [data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] * {
+            color: #D62F3A !important;
+            font-weight: 600 !important;
+        }
+
         /* Completely hide top right header toolbar (Fork, GitHub link, 3 dots menu) in Streamlit 1.61+ */
         header[data-testid="stHeader"],
         [data-testid="stHeader"],
@@ -234,14 +216,7 @@ def main():
             key="lang_select_key",
             on_change=_on_lang_change
         )
-            
         st.markdown("<br>", unsafe_allow_html=True)
-        # Beautiful Telegram-style Night Mode Toggle
-        col1, col2 = st.columns([8, 2])
-        with col1:
-            st.markdown(f"**🌙 {tr('Mode Nuit' if st.session_state.language == 'French' else 'Night Mode')}**")
-        with col2:
-            st.toggle(" ", key="night_mode", label_visibility="collapsed")
 
         if st.session_state.get('user') is not None:
             st.markdown(f"### {tr('🌐 Portal Navigation')}")
