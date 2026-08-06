@@ -39,66 +39,79 @@ def main():
     if st.session_state.night_mode:
         st.markdown("""
             <style>
-            /* Comprehensive Dark Mode Injection */
-            html, body, .stApp, .stApp > header, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+            /* Enable native browser dark mode engine for inputs, scrollbars, popovers */
+            :root, html, body, .stApp {
+                color-scheme: dark !important;
+                --background-color: #0e1117 !important;
+                --secondary-background-color: #161920 !important;
+                --text-color: #fafafa !important;
+            }
+
+            /* Base Dark Backgrounds & Text */
+            html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
                 background-color: #0e1117 !important;
                 color: #fafafa !important;
             }
+
+            /* Sidebar Dark Background */
             [data-testid="stSidebar"], [data-testid="stSidebar"] > div {
-                background-color: #262730 !important;
+                background-color: #161920 !important;
+                border-right: 1px solid #262a36 !important;
             }
-            [data-testid="stSidebar"] * {
-                color: #fafafa !important;
+
+            /* Containers & Bordered Cards */
+            [data-testid="stVerticalBlockBorderWrapper"] {
+                background-color: #161920 !important;
+                border-color: #262a36 !important;
             }
-            /* Fix ALL Icons (SVGs and Material Font Icons like the password eye and select caret) */
-            svg, svg *, path, [data-baseweb="icon"], [data-baseweb="icon"] *, .material-symbols-rounded, .material-icons, [data-testid="stIconMaterial"] {
-                fill: #fafafa !important;
-                stroke: #fafafa !important;
-                color: #fafafa !important;
-            }
-            /* Force everything inside text inputs and selectboxes to be white (including the eye button) */
-            [data-baseweb="input"] *, [data-baseweb="select"] * {
-                color: #fafafa !important;
-                fill: #fafafa !important;
-            }
-            /* Keep checkbox inner tick visible */
-            [data-baseweb="checkbox"] svg, [data-baseweb="checkbox"] path { 
-                fill: none !important; 
-                stroke: #fafafa !important;
-            }
-            /* Buttons, forms and all clickable elements */
-            .stButton > button, .stDownloadButton > button, .stFormSubmitButton > button {
-                background-color: #262730 !important;
+
+            /* Inputs, Selectboxes, Textareas */
+            div[data-baseweb="select"] > div, 
+            input, 
+            div[data-baseweb="input"], 
+            textarea {
+                background-color: #1e222d !important;
                 color: #ffffff !important;
-                border-color: #4b4b4b !important;
+                border-color: #333a4a !important;
             }
-            .stButton > button *, .stDownloadButton > button *, .stFormSubmitButton > button * {
+
+            /* Popover Menus & Dropdowns */
+            div[data-baseweb="popover"] > div, 
+            div[data-baseweb="popover"] ul,
+            div[data-baseweb="menu"] {
+                background-color: #1e222d !important;
+                border: 1px solid #333a4a !important;
+            }
+            div[data-baseweb="popover"] li,
+            div[data-baseweb="menu"] [role="option"] {
                 color: #ffffff !important;
             }
-            .stButton > button:hover, .stDownloadButton > button:hover, .stFormSubmitButton > button:hover {
-                border-color: #ff4b4b !important;
-                color: #ff4b4b !important;
+            div[data-baseweb="popover"] li:hover,
+            div[data-baseweb="menu"] [role="option"]:hover {
+                background-color: #2c3242 !important;
             }
-            /* Inputs and dropdowns */
-            div[data-baseweb="select"] > div, input, div[data-baseweb="input"], textarea {
-                background-color: #1e1e1e !important;
-                color: #fafafa !important;
-                border-color: #4b4b4b !important;
+
+            /* Standard Buttons */
+            .stButton > button, .stDownloadButton > button {
+                background-color: #1e222d !important;
+                color: #ffffff !important;
+                border-color: #333a4a !important;
             }
-            /* Dropdown popover list items */
-            div[data-baseweb="popover"] > div, div[data-baseweb="popover"] ul {
-                background-color: #262730 !important;
+            .stButton > button:hover, .stDownloadButton > button:hover {
+                border-color: #D62F3A !important;
+                color: #D62F3A !important;
             }
-            div[data-baseweb="popover"] * {
-                color: #fafafa !important;
+
+            /* Primary Action Buttons (Red Accent) */
+            .stButton > button[kind="primary"], .stFormSubmitButton > button {
+                background-color: #D62F3A !important;
+                color: #ffffff !important;
+                border-color: #D62F3A !important;
             }
-            div[data-baseweb="popover"] li:hover {
-                background-color: #4b4b4b !important;
-            }
-            /* Dataframes */
-            [data-testid="stDataFrame"], [data-testid="stDataFrame"] * {
-                background-color: #1e1e1e !important;
-                color: #fafafa !important;
+
+            /* Dataframes & Data Editors */
+            [data-testid="stDataFrame"], [data-testid="stDataEditor"] {
+                background-color: #161920 !important;
             }
             </style>
         """, unsafe_allow_html=True)
