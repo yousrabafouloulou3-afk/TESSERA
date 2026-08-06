@@ -17,7 +17,9 @@ import streamlit as st
 import psycopg2
 import psycopg2.extras
 
-_OR_IGNORE_RE  = re.compile(r'\bINSERT\s+OR\s+IGNORE\b', re.IGNORECASE)
+_OR_IGNORE_RE  = re.compile(r'\bINSERT\s+OR\s+IGNORE\b',  re.IGNORECASE)
+_OR_REPLACE_RE = re.compile(r'\bINSERT\s+OR\s+REPLACE\b', re.IGNORECASE)
+_COL_LIST_RE   = re.compile(r'INTO\s+\w+\s*\(([^)]+)\)', re.IGNORECASE)
 
 
 class _CIDict(dict):
@@ -52,9 +54,24 @@ class _CompatCursor:
         self._cur = cur
 
     def _adapt(self, q):
-        """Convert ? → %s and INSERT OR IGNORE → ON CONFLICT DO NOTHING."""
+        """Convert SQLite-isms to PostgreSQL:
+        • ?               → %s
+        • INSERT OR IGNORE → INSERT … ON CONFLICT DO NOTHING
+        • INSERT OR REPLACE → INSERT … ON CONFLICT DO UPDATE SET col=EXCLUDED.col
+        """
         q = q.replace('?', '%s')
-        if _OR_IGNORE_RE.search(q):
+        if _OR_REPLACE_RE.search(q):
+            q = _OR_REPLACE_RE.sub('INSERT', q)
+            # Parse column list to build SET clause
+            m = _COL_LIST_RE.search(q)
+            if m:
+                cols = [c.strip() for c in m.group(1).split(',')]
+                set_clause = ', '.join(f'{c}=EXCLUDED.{c}' for c in cols)
+                q = q.rstrip().rstrip(';') + f' ON CONFLICT DO UPDATE SET {set_clause}'
+            else:
+                # Fallback: just upsert without SET (shouldn't happen)
+                q = q.rstrip().rstrip(';') + ' ON CONFLICT DO NOTHING'
+        elif _OR_IGNORE_RE.search(q):
             q = _OR_IGNORE_RE.sub('INSERT', q)
             q = q.rstrip().rstrip(';') + ' ON CONFLICT DO NOTHING'
         return q
