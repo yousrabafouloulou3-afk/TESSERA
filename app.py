@@ -33,91 +33,7 @@ def main():
     if 'language' not in st.session_state:
         st.session_state.language = 'English'
 
-    # Sidebar auto-expand: use components.html so JS runs in an iframe
-    # but targets window.parent.document (the actual Streamlit page).
-    import streamlit.components.v1 as components
-    components.html("""
-        <script>
-        (function() {
-            var doc = window.parent.document;
 
-            // Remove any stale overlay button from previous runs/versions
-            var old = doc.getElementById('__tessera_sb__');
-            if (old) old.remove();
-
-            // Prevent duplicate initialisation across Streamlit reruns
-            if (doc.__tessera_sb_init__) return;
-            doc.__tessera_sb_init__ = true;
-
-            // Click a React-managed button reliably (only for auto-expand on load)
-            function clickReactButton(btn) {
-                if (!btn) return false;
-                var keys = Object.keys(btn);
-                for (var i = 0; i < keys.length; i++) {
-                    if (keys[i].startsWith('__reactProps$') || keys[i].startsWith('__reactEvents$')) {
-                        var props = btn[keys[i]];
-                        if (props && props.onClick) {
-                            props.onClick(new MouseEvent('click', {bubbles:true, cancelable:true}));
-                            return true;
-                        }
-                    }
-                }
-                for (var i = 0; i < keys.length; i++) {
-                    if (keys[i].startsWith('__reactFiber$') || keys[i].startsWith('__reactInternalInstance$')) {
-                        var fiber = btn[keys[i]];
-                        var limit = 20;
-                        while (fiber && limit-- > 0) {
-                            if (fiber.memoizedProps && fiber.memoizedProps.onClick) {
-                                fiber.memoizedProps.onClick(new MouseEvent('click', {bubbles:true}));
-                                return true;
-                            }
-                            fiber = fiber.return;
-                        }
-                    }
-                }
-                btn.click();
-                return true;
-            }
-
-            function findExpandBtn() {
-                var sels = [
-                    '[data-testid="stSidebarCollapsedControl"] button',
-                    '[data-testid="collapsedControl"] button',
-                    'button[aria-label="Open sidebar"]',
-                    'button[aria-label="open sidebar"]',
-                    'button[aria-label*="sidebar"]',
-                    'button[aria-label*="Sidebar"]',
-                    'button[aria-label="Open sidebar navigation"]'
-                ];
-                for (var i = 0; i < sels.length; i++) {
-                    var el = doc.querySelector(sels[i]);
-                    if (el) return el;
-                }
-                return null;
-            }
-
-            function isCollapsed() {
-                var s = doc.querySelector('[data-testid="stSidebar"]');
-                if (!s) return true;
-                var r = s.getBoundingClientRect();
-                return r.width < 20 || r.left < -50;
-            }
-
-            function autoExpand() {
-                if (isCollapsed()) {
-                    var btn = findExpandBtn();
-                    if (btn) clickReactButton(btn);
-                }
-            }
-
-            // Auto-expand on first load — try several times to beat Streamlit's re-renders
-            setTimeout(autoExpand, 300);
-            setTimeout(autoExpand, 800);
-            setTimeout(autoExpand, 1500);
-            setTimeout(autoExpand, 3000);
-        })();
-        </script>
-    """, height=0)
 
     # Inject layout & header removal CSS
     st.markdown("""
@@ -129,10 +45,13 @@ def main():
         }
 
 
-        /* ── Sidebar Expand button (>>) — shown when sidebar is collapsed ── */
-        /* Streamlit renders this div only when collapsed; we pin it top-left and style it red */
+        /* ── Sidebar Expand button (>>) ── */
+        /* Style the native Streamlit expand button red — works across all Streamlit versions */
         [data-testid="stSidebarCollapsedControl"],
-        div[data-testid="stSidebarCollapsedControl"] {
+        [data-testid="stSidebarCollapseButton"],
+        [data-testid="collapsedControl"],
+        div[data-testid="stSidebarCollapsedControl"],
+        div[data-testid="stSidebarCollapseButton"] {
             display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
@@ -143,7 +62,9 @@ def main():
             pointer-events: auto !important;
         }
 
-        [data-testid="stSidebarCollapsedControl"] button {
+        [data-testid="stSidebarCollapsedControl"] button,
+        [data-testid="stSidebarCollapseButton"] button,
+        [data-testid="collapsedControl"] button {
             display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
@@ -160,10 +81,20 @@ def main():
         }
 
         [data-testid="stSidebarCollapsedControl"] button svg,
-        [data-testid="stSidebarCollapsedControl"] button path {
+        [data-testid="stSidebarCollapsedControl"] button path,
+        [data-testid="stSidebarCollapseButton"] button svg,
+        [data-testid="stSidebarCollapseButton"] button path {
             fill: #ffffff !important;
             stroke: #ffffff !important;
             color: #ffffff !important;
+        }
+
+        /* Ensure sidebar is always shown when expanded (not translated off) */
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            display: flex !important;
+            visibility: visible !important;
+            transform: none !important;
+            left: 0 !important;
         }
 
 
