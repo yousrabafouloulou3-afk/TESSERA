@@ -48,7 +48,7 @@ class _CIDict(dict):
         except KeyError:
             return False
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=600, show_spinner=False)
 def _cached_execute_select(q, params):
     """Cache read-only queries for 10 minutes to drastically reduce Supabase round-trips on every interaction."""
     conn = _get_pool().getconn()
