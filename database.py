@@ -54,8 +54,7 @@ class _CompatCursor:
     def __init__(self, cur):
         self._cur = cur
 
-    @staticmethod
-    @functools.lru_cache(maxsize=512)
+    # lru_cache removed to avoid caching issues with instance method
     def _adapt(self, q):
         """Convert SQLite-isms to PostgreSQL:
         • bare % (e.g. LIKE 'foo_%') → %% so psycopg2 doesn't treat it as a placeholder
