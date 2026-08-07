@@ -55,9 +55,13 @@ class _CompatCursor:
 
     def _adapt(self, q):
         """Convert SQLite-isms to PostgreSQL:
-        • ?               → %s
-        • INSERT OR IGNORE → INSERT … ON CONFLICT DO NOTHING
+        • bare % (e.g. LIKE 'foo_%') → %% so psycopg2 doesn't treat it as a placeholder
+        • ?                          → %s
+        • INSERT OR IGNORE           → INSERT … ON CONFLICT DO NOTHING
         """
+        # 1. Escape any bare % that is NOT already a %s placeholder (e.g. LIKE wildcards)
+        q = re.sub(r'%(?!s)', '%%', q)
+        # 2. Convert SQLite ? placeholders to psycopg2 %s
         q = q.replace('?', '%s')
         if _OR_IGNORE_RE.search(q):
             q = _OR_IGNORE_RE.sub('INSERT', q)

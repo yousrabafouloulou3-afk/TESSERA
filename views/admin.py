@@ -457,7 +457,7 @@ def show_delegate_matricules_entry():
                 val = row["Delegate Matricule"]
                 mat = str(val).strip() if pd.notna(val) and val is not None else ""
                 if mat:
-                    c.execute("INSERT INTO Delegates (section_id, matricule) VALUES (%s, %s) ON CONFLICT (section_id) DO UPDATE SET matricule=EXCLUDED.matricule", (sec_id, mat))
+                    c.execute("INSERT INTO Delegates (section_id, matricule) VALUES (?, ?) ON CONFLICT (section_id) DO UPDATE SET matricule=EXCLUDED.matricule", (sec_id, mat))
                 else:
                     c.execute("DELETE FROM Delegates WHERE section_id = ?", (sec_id,))
             conn.commit()
