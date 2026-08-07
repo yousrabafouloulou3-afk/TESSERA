@@ -48,6 +48,26 @@ class _CIDict(dict):
         except KeyError:
             return False
 
+@st.cache_data(ttl=2)
+def _cached_execute_select(q, params):
+    """Cache read-only queries for 2 seconds to drastically reduce Supabase round-trips on every interaction."""
+    conn = _get_pool().getconn()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(q, params) if params is not None else cur.execute(q)
+            return cur.fetchall()
+    finally:
+        _get_pool().putconn(conn)
+
+def _make_hashable(val):
+    if isinstance(val, list):
+        return tuple(_make_hashable(x) for x in val)
+    elif isinstance(val, tuple):
+        return tuple(_make_hashable(x) for x in val)
+    elif isinstance(val, dict):
+        return tuple(sorted((k, _make_hashable(v)) for k, v in val.items()))
+    return val
+
 class _CompatCursor:
     """Wraps psycopg2 RealDictCursor to transparently accept sqlite3-style SQL."""
 
@@ -72,23 +92,55 @@ class _CompatCursor:
 
     def execute(self, query, params=None):
         q = self._adapt(query)
-        self._cur.execute(q, params) if params is not None else self._cur.execute(q)
+        is_select = q.lstrip().upper().startswith("SELECT")
+        if is_select:
+            try:
+                hashable_params = _make_hashable(params)
+                self._cached_rows = _cached_execute_select(q, hashable_params)
+                self._cached_idx = 0
+            except Exception:
+                # Fallback if caching fails (e.g. unhashable parameter)
+                self._cached_rows = None
+                self._cur.execute(q, params) if params is not None else self._cur.execute(q)
+        else:
+            self._cached_rows = None
+            self._cur.execute(q, params) if params is not None else self._cur.execute(q)
+            # Clear cache on write operations to guarantee immediate consistency
+            _cached_execute_select.clear()
 
     def executemany(self, query, params_list):
         self._cur.executemany(self._adapt(query), params_list)
+        _cached_execute_select.clear()
 
     def fetchone(self):
+        if getattr(self, '_cached_rows', None) is not None:
+            if self._cached_idx < len(self._cached_rows):
+                row = self._cached_rows[self._cached_idx]
+                self._cached_idx += 1
+                return _CIDict(row)
+            return None
+            
         row = self._cur.fetchone()
         if row is None:
             return None
         return _CIDict(row)
 
     def fetchall(self):
+        if getattr(self, '_cached_rows', None) is not None:
+            rows = self._cached_rows[self._cached_idx:]
+            self._cached_idx = len(self._cached_rows)
+            return [_CIDict(r) for r in rows]
+            
         return [_CIDict(r) for r in self._cur.fetchall()]
 
     def __iter__(self):
-        for row in self._cur:
-            yield _CIDict(row)
+        if getattr(self, '_cached_rows', None) is not None:
+            while self._cached_idx < len(self._cached_rows):
+                yield _CIDict(self._cached_rows[self._cached_idx])
+                self._cached_idx += 1
+        else:
+            for row in self._cur:
+                yield _CIDict(row)
 
 
 class _CompatConn:
