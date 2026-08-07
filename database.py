@@ -188,6 +188,9 @@ def init_db():
         )
     ''')
     
+    # Automatically create a default admin user if one does not exist
+    c.execute("INSERT OR IGNORE INTO Users (username, password, role) VALUES ('admin', 'admin123', 'admin')")
+    
     conn.commit()
     conn.close()
 
