@@ -48,9 +48,9 @@ class _CIDict(dict):
         except KeyError:
             return False
 
-@st.cache_data(ttl=2)
+@st.cache_data(ttl=600)
 def _cached_execute_select(q, params):
-    """Cache read-only queries for 2 seconds to drastically reduce Supabase round-trips on every interaction."""
+    """Cache read-only queries for 10 minutes to drastically reduce Supabase round-trips on every interaction."""
     conn = _get_pool().getconn()
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
