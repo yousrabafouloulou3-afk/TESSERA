@@ -126,7 +126,7 @@ def _get_pool():
     cfg = st.secrets["supabase"]
     return pg_pool.ThreadedConnectionPool(
         minconn=1,
-        maxconn=10,
+        maxconn=20,
         host=cfg["host"],
         port=int(cfg["port"]),
         dbname=cfg["database"],
@@ -147,7 +147,14 @@ def get_db_connection():
 
 class _PoolCompatConn(_CompatConn):
     """Like _CompatConn but returns the connection to the pool on close()."""
+    def __init__(self, conn):
+        super().__init__(conn)
+        self._returned = False
+
     def close(self):
+        if self._returned:
+            return
+        self._returned = True
         try:
             _get_pool().putconn(self._conn)
         except Exception:
@@ -155,6 +162,11 @@ class _PoolCompatConn(_CompatConn):
                 self._conn.close()
             except Exception:
                 pass
+
+    def __del__(self):
+        """Safety net: return connection to pool if close() was never called."""
+        if not self._returned:
+            self.close()
 
     def __exit__(self, *args):
         self.close()
