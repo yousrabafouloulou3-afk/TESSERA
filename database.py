@@ -1,296 +1,87 @@
-import os
-import re
-import json
+import sqlite3
 import pandas as pd
-import streamlit as st
-import functools
+import os
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  PostgreSQL / Supabase compatibility layer
-#  Makes psycopg2 behave exactly like sqlite3 for the rest of the codebase:
-#    • conn.cursor()  →  returns a cursor that accepts ? placeholders
-#    • row['col']     →  works (RealDictCursor)
-#    • conn.commit()  →  works
-#    • conn.close()   →  works
-#    • INSERT OR IGNORE  →  auto-converted to ON CONFLICT DO NOTHING
-# ─────────────────────────────────────────────────────────────────────────────
-
-import psycopg2
-import psycopg2.extras
-
-_OR_IGNORE_RE  = re.compile(r'\bINSERT\s+OR\s+IGNORE\b',  re.IGNORECASE)
-_OR_REPLACE_RE = re.compile(r'\bINSERT\s+OR\s+REPLACE\b', re.IGNORECASE)
-_COL_LIST_RE   = re.compile(r'INTO\s+\w+\s*\(([^)]+)\)', re.IGNORECASE)
-
-
-class _CIDict(dict):
-    """Case-insensitive dict: row['ID_E'], row['id_e'], row['Username'] all work."""
-    def __getitem__(self, key):
-        try:
-            return super().__getitem__(key)
-        except KeyError:
-            key_lower = key.lower()
-            for k, v in self.items():
-                if k.lower() == key_lower:
-                    return v
-            raise
-
-    def get(self, key, default=None):
-        try:
-            return self[key]
-        except KeyError:
-            return default
-
-    def __contains__(self, key):
-        try:
-            self[key]
-            return True
-        except KeyError:
-            return False
-
-@st.cache_data(ttl=600, show_spinner=False)
-def _cached_execute_select(q, params):
-    """Cache read-only queries for 10 minutes to drastically reduce Supabase round-trips on every interaction."""
-    conn = _get_pool().getconn()
-    try:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(q, params) if params is not None else cur.execute(q)
-            return cur.fetchall()
-    finally:
-        _get_pool().putconn(conn)
-
-def _make_hashable(val):
-    if isinstance(val, list):
-        return tuple(_make_hashable(x) for x in val)
-    elif isinstance(val, tuple):
-        return tuple(_make_hashable(x) for x in val)
-    elif isinstance(val, dict):
-        return tuple(sorted((k, _make_hashable(v)) for k, v in val.items()))
-    return val
-
-class _CompatCursor:
-    """Wraps psycopg2 RealDictCursor to transparently accept sqlite3-style SQL."""
-
-    def __init__(self, cur):
-        self._cur = cur
-
-    # lru_cache removed to avoid caching issues with instance method
-    def _adapt(self, q):
-        """Convert SQLite-isms to PostgreSQL:
-        • bare % (e.g. LIKE 'foo_%') → %% so psycopg2 doesn't treat it as a placeholder
-        • ?                          → %s
-        • INSERT OR IGNORE           → INSERT … ON CONFLICT DO NOTHING
-        """
-        # 1. Escape any bare % that is NOT already a %s placeholder (e.g. LIKE wildcards)
-        q = re.sub(r'%(?!s)', '%%', q)
-        # 2. Convert SQLite ? placeholders to psycopg2 %s
-        q = q.replace('?', '%s')
-        if _OR_IGNORE_RE.search(q):
-            q = _OR_IGNORE_RE.sub('INSERT', q)
-            q = q.rstrip().rstrip(';') + ' ON CONFLICT DO NOTHING'
-        return q
-
-    def execute(self, query, params=None):
-        q = self._adapt(query)
-        is_select = q.lstrip().upper().startswith("SELECT")
-        if is_select:
-            try:
-                hashable_params = _make_hashable(params)
-                self._cached_rows = _cached_execute_select(q, hashable_params)
-                self._cached_idx = 0
-            except Exception:
-                # Fallback if caching fails (e.g. unhashable parameter)
-                self._cached_rows = None
-                self._cur.execute(q, params) if params is not None else self._cur.execute(q)
-        else:
-            self._cached_rows = None
-            self._cur.execute(q, params) if params is not None else self._cur.execute(q)
-            # Clear cache on write operations to guarantee immediate consistency
-            _cached_execute_select.clear()
-
-    def executemany(self, query, params_list):
-        self._cur.executemany(self._adapt(query), params_list)
-        _cached_execute_select.clear()
-
-    def fetchone(self):
-        if getattr(self, '_cached_rows', None) is not None:
-            if self._cached_idx < len(self._cached_rows):
-                row = self._cached_rows[self._cached_idx]
-                self._cached_idx += 1
-                return _CIDict(row)
-            return None
-            
-        row = self._cur.fetchone()
-        if row is None:
-            return None
-        return _CIDict(row)
-
-    def fetchall(self):
-        if getattr(self, '_cached_rows', None) is not None:
-            rows = self._cached_rows[self._cached_idx:]
-            self._cached_idx = len(self._cached_rows)
-            return [_CIDict(r) for r in rows]
-            
-        return [_CIDict(r) for r in self._cur.fetchall()]
-
-    def __iter__(self):
-        if getattr(self, '_cached_rows', None) is not None:
-            while self._cached_idx < len(self._cached_rows):
-                yield _CIDict(self._cached_rows[self._cached_idx])
-                self._cached_idx += 1
-        else:
-            for row in self._cur:
-                yield _CIDict(row)
-
-
-class _CompatConn:
-    """Wraps psycopg2 connection so existing code works with zero changes."""
-
-    def __init__(self, conn):
-        self._conn = conn
-
-    def cursor(self):
-        return _CompatCursor(
-            self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        )
-
-    def commit(self):
-        self._conn.commit()
-
-    def rollback(self):
-        try:
-            self._conn.rollback()
-        except Exception:
-            pass
-
-    def close(self):
-        try:
-            self._conn.close()
-        except Exception:
-            pass
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        self.close()
-
-
-@st.cache_resource
-def _get_pool():
-    """Create a persistent psycopg2 connection pool (cached for the lifetime of the app)."""
-    import streamlit as st
-    from psycopg2 import pool as pg_pool
-    cfg = st.secrets["supabase"]
-    return pg_pool.ThreadedConnectionPool(
-        minconn=1,
-        maxconn=20,
-        host=cfg["host"],
-        port=int(cfg["port"]),
-        dbname=cfg["database"],
-        user=cfg["user"],
-        password=cfg["password"],
-        sslmode="require",
-        connect_timeout=10,
-    )
-
+DB_PATH = "timetabling.db"
 
 def get_db_connection():
-    """Borrow a connection from the pool and return it wrapped in the compat layer."""
-    import streamlit as st
-    conn = _get_pool().getconn()
-    conn.autocommit = False
-    return _PoolCompatConn(conn)
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-
-class _PoolCompatConn(_CompatConn):
-    """Like _CompatConn but returns the connection to the pool on close()."""
-    def __init__(self, conn):
-        super().__init__(conn)
-        self._returned = False
-
-    def close(self):
-        if self._returned:
-            return
-        self._returned = True
-        try:
-            _get_pool().putconn(self._conn)
-        except Exception:
-            try:
-                self._conn.close()
-            except Exception:
-                pass
-
-    def __del__(self):
-        """Safety net: return connection to pool if close() was never called."""
-        if not self._returned:
-            self.close()
-
-    def __exit__(self, *args):
-        self.close()
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-#  Schema – PostgreSQL DDL (replaces SQLite schema)
-# ─────────────────────────────────────────────────────────────────────────────
-
-@st.cache_resource
 def init_db():
-    """Initialize DB schema — runs once per server lifetime (cached by Streamlit)."""
     conn = get_db_connection()
     c = conn.cursor()
-
+    
     c.execute('''
         CREATE TABLE IF NOT EXISTS Users (
-            id SERIAL PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            role TEXT NOT NULL,
-            linked_id INTEGER,
-            linked_level TEXT
+            role TEXT NOT NULL, -- 'admin', 'teacher', 'student'
+            linked_id INTEGER, -- ID_P for teachers, ID_E for students (section or group), null for admin
+            linked_level TEXT -- For students who sign up before data is inserted
         )
     ''')
-    c.execute('ALTER TABLE Users ADD COLUMN IF NOT EXISTS linked_level TEXT')
-
+    
+    try:
+        c.execute("ALTER TABLE Users ADD COLUMN linked_level TEXT")
+    except sqlite3.OperationalError:
+        pass
+    
     c.execute('''
         CREATE TABLE IF NOT EXISTS Entities (
-            ID_E SERIAL PRIMARY KEY,
+            ID_E INTEGER PRIMARY KEY,
             typeE INTEGER,
             sectionID INTEGER,
             nameE TEXT,
             specialite TEXT
         )
     ''')
-
+    
     c.execute('''
         CREATE TABLE IF NOT EXISTS Profs (
-            ID_P SERIAL PRIMARY KEY,
+            ID_P INTEGER PRIMARY KEY,
             nameP TEXT,
             prof INTEGER,
             specialite TEXT,
             matricule TEXT UNIQUE
         )
-    '''
-    )
-
+    ''')
+    
+    # Ensure columns exist for users updating from older schemas
+    try:
+        c.execute("ALTER TABLE Profs ADD COLUMN specialite TEXT")
+    except sqlite3.OperationalError:
+        pass
+        
+    try:
+        c.execute("ALTER TABLE Profs ADD COLUMN matricule TEXT UNIQUE")
+    except sqlite3.OperationalError:
+        try:
+            # SQLite workaround since ADD COLUMN UNIQUE is restricted
+            c.execute("ALTER TABLE Profs ADD COLUMN matricule TEXT")
+        except sqlite3.OperationalError:
+            pass
+    
     c.execute('''
         CREATE TABLE IF NOT EXISTS Modules (
-            ID_M SERIAL PRIMARY KEY,
+            ID_M INTEGER PRIMARY KEY,
             typeM INTEGER,
             nameM TEXT,
             ID_P INTEGER,
             ID_E INTEGER
         )
     ''')
-
+    
     c.execute('''
         CREATE TABLE IF NOT EXISTS Salles (
-            ID_S SERIAL PRIMARY KEY,
+            ID_S INTEGER PRIMARY KEY,
             typeS INTEGER,
             nameS TEXT
         )
     ''')
-
+    
     c.execute('''
         CREATE TABLE IF NOT EXISTS Indisponibilites (
             ID_P INTEGER,
@@ -298,7 +89,7 @@ def init_db():
             PRIMARY KEY (ID_P, t)
         )
     ''')
-
+    
     c.execute('''
         CREATE TABLE IF NOT EXISTS Preferences (
             ID_P INTEGER,
@@ -309,12 +100,16 @@ def init_db():
             PRIMARY KEY (ID_P, ID_M, t)
         )
     ''')
-    c.execute('ALTER TABLE Preferences ADD COLUMN IF NOT EXISTS is_auto INTEGER DEFAULT 0')
-
-    # Planning uses explicit integer IDs (set from module IDs), not auto-increment
+    
+    try:
+        c.execute("ALTER TABLE Preferences ADD COLUMN is_auto INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    
+    # Store the actual generated plan
     c.execute('''
         CREATE TABLE IF NOT EXISTS Planning (
-            id INTEGER PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             ID_P INTEGER,
             ID_E INTEGER,
             ID_S INTEGER,
@@ -323,27 +118,27 @@ def init_db():
             score INTEGER
         )
     ''')
-
+    
     c.execute('''
         CREATE TABLE IF NOT EXISTS SystemSettings (
             key TEXT PRIMARY KEY,
             value TEXT
         )
     ''')
-
+    
     c.execute('''
         CREATE TABLE IF NOT EXISTS Drafts (
-            id SERIAL PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT,
             form_key TEXT,
             draft_data TEXT,
             UNIQUE(username, form_key)
         )
     ''')
-
+    
     c.execute('''
         CREATE TABLE IF NOT EXISTS RescheduleRequests (
-            id SERIAL PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             session_id INTEGER,
             ID_P INTEGER,
             new_t INTEGER,
@@ -351,10 +146,10 @@ def init_db():
             status TEXT DEFAULT 'Pending_Delegate'
         )
     ''')
-
+    
     c.execute('''
         CREATE TABLE IF NOT EXISTS SwapRequests (
-            ID_SR SERIAL PRIMARY KEY,
+            ID_SR INTEGER PRIMARY KEY AUTOINCREMENT,
             ID_P_Requester INTEGER,
             ID_Session_Requester INTEGER,
             ID_P_Target INTEGER,
@@ -365,65 +160,124 @@ def init_db():
             approved_by_delegate2 INTEGER DEFAULT 0
         )
     ''')
-    c.execute('ALTER TABLE SwapRequests ADD COLUMN IF NOT EXISTS approved_by_delegate1 INTEGER DEFAULT 0')
-    c.execute('ALTER TABLE SwapRequests ADD COLUMN IF NOT EXISTS approved_by_delegate2 INTEGER DEFAULT 0')
+    
+    try:
+        c.execute("ALTER TABLE SwapRequests ADD COLUMN approved_by_delegate1 INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE SwapRequests ADD COLUMN approved_by_delegate2 INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass
 
     c.execute('''
         CREATE TABLE IF NOT EXISTS UnavailabilityRequests (
-            id SERIAL PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             ID_P INTEGER,
             t INTEGER,
             reason TEXT,
-            status TEXT DEFAULT 'Pending'
+            status TEXT DEFAULT 'Pending' -- 'Pending', 'Approved', 'Rejected'
         )
     ''')
-
+    
     c.execute('''
         CREATE TABLE IF NOT EXISTS Delegates (
             section_id INTEGER PRIMARY KEY,
-            matricule TEXT UNIQUE
+            matricule TEXT UNIQUE,
+            FOREIGN KEY(section_id) REFERENCES Entities(ID_E)
         )
     ''')
-
+    
     conn.commit()
     conn.close()
-    seed_default_users()
 
 
-def seed_default_users():
+
+def upload_csvs_to_db(fichiers):
+    """Parses Excel like `charger_donnees` but directly shunts to DB, plus creates user accounts."""
+    for s in fichiers: fichiers[s].columns = fichiers[s].columns.str.strip()
+
+    def clean_int(val):
+        if pd.isna(val): return 0
+        try: return int(float(val))
+        except: return 0
+
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("""
-        INSERT INTO Users (username, password, role, linked_id)
-        VALUES ('admin', 'admin123', 'admin', NULL)
-        ON CONFLICT (username) DO NOTHING
-    """)
+    
+    # Clear old data purely for re-upload functionality
+    c.execute("DELETE FROM Entities")
+    c.execute("DELETE FROM Profs")
+    c.execute("DELETE FROM Modules")
+    c.execute("DELETE FROM Salles")
+    c.execute("DELETE FROM Indisponibilites")
+    # c.execute("DELETE FROM Preferences") # Preferences might be kept if manual
+    c.execute("DELETE FROM Planning")
+    
+    # Also delete dynamically generated teachers and students
+    c.execute("DELETE FROM Users WHERE role IN ('teacher', 'student')")
+    
+    # Populate Profs & Teacher users
+    if 'Profs' in fichiers:
+        for _, row in fichiers['Profs'].dropna(subset=['ID_P']).iterrows():
+            id_p = clean_int(row['ID_P'])
+            c.execute("INSERT INTO Profs (ID_P, nameP, prof) VALUES (?, ?, ?)",
+                      (id_p, str(row['nameP']), clean_int(row['prof'])))
+            # Create user for teacher
+            c.execute("INSERT INTO Users (username, password, role, linked_id) VALUES (?, ?, 'teacher', ?)",
+                      (f"teacher_{id_p}", "teacher123", id_p))
+
+    # Populate Entities & Student users
+    if 'Entites' in fichiers:
+        for _, row in fichiers['Entites'].dropna(subset=['ID_E']).iterrows():
+            id_e = clean_int(row['ID_E'])
+            c.execute("INSERT INTO Entities (ID_E, typeE, sectionID, nameE, specialite) VALUES (?, ?, ?, ?, ?)",
+                      (id_e, clean_int(row.get('typeE')), clean_int(row.get('sectionID')), str(row.get('nameE', '')), str(row.get('specialite', ''))))
+            # Create user for student group/section
+            c.execute("INSERT INTO Users (username, password, role, linked_id) VALUES (?, ?, 'student', ?)",
+                      (f"student_{id_e}", "student123", id_e))
+
+    # Populate Modules
+    if 'Modules' in fichiers:
+        for _, row in fichiers['Modules'].dropna(how='all').iterrows():
+            if pd.notna(row.get('ID_M')):
+                c.execute("INSERT INTO Modules (ID_M, typeM, nameM, ID_P, ID_E) VALUES (?, ?, ?, ?, ?)",
+                          (clean_int(row['ID_M']), clean_int(row['typeM']), str(row['nameM']), clean_int(row['ID_P']), clean_int(row['ID_E'])))
+
+    # Populate Salles
+    if 'Salles' in fichiers:
+        for _, row in fichiers['Salles'].dropna(subset=['ID_S']).iterrows():
+            c.execute("INSERT INTO Salles (ID_S, typeS, nameS) VALUES (?, ?, ?)",
+                      (clean_int(row['ID_S']), clean_int(row['typeS']), str(row['nameS'])))
+
+    # Populate AP (Indisponibilites)
+    if 'AP' in fichiers:
+        for _, row in fichiers['AP'].dropna(subset=['ID_P', 't']).iterrows():
+            c.execute("INSERT INTO Indisponibilites (ID_P, t) VALUES (?, ?)",
+                      (clean_int(row['ID_P']), clean_int(row['t'])))
+                      
+    # Optionally load Preferences if they exist in file (Teachers will also be able to overwrite this later)
+    if 'Preferences' in fichiers:
+        for _, row in fichiers['Preferences'].iterrows():
+             c.execute("INSERT OR REPLACE INTO Preferences (ID_P, ID_M, t, score) VALUES (?, ?, ?, ?)",
+                      (clean_int(row['ID_P']), clean_int(row['ID_M']), clean_int(row['t']), clean_int(row['score'])))
+
     conn.commit()
     conn.close()
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-#  Planning
-# ─────────────────────────────────────────────────────────────────────────────
+    return True
 
 def save_planning_to_db(planning):
-    """Saves final planning list of dicts to the db."""
+    """Saves final planning list of dicts to the db, keeping the session ID stable (id = ID_M)."""
     conn = get_db_connection()
     c = conn.cursor()
     c.execute("DELETE FROM Planning")
     for session in planning['planning_final']:
         c.execute("""
-            INSERT INTO Planning (id, ID_P, ID_E, ID_S, ID_M, t, score)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (session['ID_M'], session['ID_P'], session['ID_E'], session['ID_S'],
-              session['ID_M'], session['t'], session['score']))
+            INSERT INTO Planning (id, ID_P, ID_E, ID_S, ID_M, t, score) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (session['ID_M'], session['ID_P'], session['ID_E'], session['ID_S'], session['ID_M'], session['t'], session['score']))
     conn.commit()
     conn.close()
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-#  Clear tables
-# ─────────────────────────────────────────────────────────────────────────────
 
 def clear_table_students():
     conn = get_db_connection()
@@ -433,7 +287,6 @@ def clear_table_students():
     c.execute("DELETE FROM Users WHERE role IN ('student', 'delegate')")
     conn.commit()
     conn.close()
-    seed_default_users()
 
 def clear_table_professors():
     conn = get_db_connection()
@@ -442,7 +295,6 @@ def clear_table_professors():
     c.execute("DELETE FROM Users WHERE role = 'teacher'")
     conn.commit()
     conn.close()
-    seed_default_users()
 
 def clear_table_rooms():
     conn = get_db_connection()
@@ -458,54 +310,53 @@ def clear_table_modules():
     conn.commit()
     conn.close()
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-#  Professors
-# ─────────────────────────────────────────────────────────────────────────────
-
 def add_single_professor(name, specialite, is_prof, matricule):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("SELECT ID_P FROM Profs WHERE nameP = %s AND specialite = %s", (name, specialite))
+    c.execute("SELECT ID_P FROM Profs WHERE nameP = ? AND specialite = ?", (name, specialite))
     row = c.fetchone()
     if row:
         conn.close()
         return False, "Professor already exists in this specialty."
-    c.execute("INSERT INTO Profs (nameP, prof, specialite, matricule) VALUES (%s, %s, %s, %s)",
-              (name, is_prof, specialite, matricule))
+        
+    c.execute("INSERT INTO Profs (nameP, prof, specialite, matricule) VALUES (?, ?, ?, ?)", (name, is_prof, specialite, matricule))
+    prof_id = c.lastrowid
+    c.execute("INSERT OR IGNORE INTO Users (username, password, role, linked_id) VALUES (?, ?, 'teacher', ?)", (f"teacher_{prof_id}", "teacher123", prof_id))
     conn.commit()
     conn.close()
     return True, "Professor added successfully."
-
-
 def delete_single_professor(id_p):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("SELECT nameP, specialite FROM Profs WHERE ID_P = %s", (id_p,))
+    # Get professor details to clean up drafts
+    c.execute("SELECT nameP, specialite FROM Profs WHERE ID_P = ?", (id_p,))
     prof = c.fetchone()
     if prof:
         prof_name = prof['nameP']
         spec = prof['specialite']
-
-        c.execute("DELETE FROM Profs WHERE ID_P = %s", (id_p,))
-        c.execute("DELETE FROM Users WHERE role = 'teacher' AND linked_id = %s", (id_p,))
-        c.execute("UPDATE Modules SET ID_P = NULL WHERE ID_P = %s", (id_p,))
-        c.execute("UPDATE Planning SET ID_P = NULL WHERE ID_P = %s", (id_p,))
-        c.execute("DELETE FROM Preferences WHERE ID_P = %s", (id_p,))
-        c.execute("DELETE FROM Indisponibilites WHERE ID_P = %s", (id_p,))
-        c.execute("DELETE FROM SwapRequests WHERE ID_P_Requester = %s OR ID_P_Target = %s", (id_p, id_p))
-        c.execute("DELETE FROM RescheduleRequests WHERE ID_P = %s", (id_p,))
-        c.execute("DELETE FROM UnavailabilityRequests WHERE ID_P = %s", (id_p,))
-
+        
+        # Delete professor
+        c.execute("DELETE FROM Profs WHERE ID_P = ?", (id_p,))
+        c.execute("DELETE FROM Users WHERE role = 'teacher' AND linked_id = ?", (id_p,))
+        c.execute("UPDATE Modules SET ID_P = NULL WHERE ID_P = ?", (id_p,))
+        c.execute("UPDATE Planning SET ID_P = NULL WHERE ID_P = ?", (id_p,))
+        c.execute("DELETE FROM Preferences WHERE ID_P = ?", (id_p,))
+        c.execute("DELETE FROM Indisponibilites WHERE ID_P = ?", (id_p,))
+        c.execute("DELETE FROM SwapRequests WHERE ID_P_Requester = ? OR ID_P_Target = ?", (id_p, id_p))
+        c.execute("DELETE FROM RescheduleRequests WHERE ID_P = ?", (id_p,))
+        c.execute("DELETE FROM UnavailabilityRequests WHERE ID_P = ?", (id_p,))
+        
+        # Clean up drafts
         c.execute("SELECT username, draft_data FROM Drafts WHERE form_key = 'prof_form'")
         rows = c.fetchall()
+        import json
         for row in rows:
             username = row['username']
             try:
                 draft = json.loads(row['draft_data'])
-            except Exception:
+            except:
                 continue
-
+            
             num_prof_draft_key = f"num_profs_{spec}"
             if num_prof_draft_key in draft:
                 num_profs = draft[num_prof_draft_key]
@@ -515,53 +366,55 @@ def delete_single_professor(id_p):
                     p_mat = draft.get(f"mat_{spec}_{i}", "")
                     p_isprof = draft.get(f"isprof_{spec}_{i}", False)
                     profs_list.append((p_name, p_mat, p_isprof))
-
+                
+                # Filter out the deleted professor
                 new_profs_list = [p for p in profs_list if p[0] != prof_name]
                 if len(new_profs_list) < len(profs_list):
                     draft[num_prof_draft_key] = len(new_profs_list)
+                    # delete old keys for this spec
                     for i in range(num_profs):
                         draft.pop(f"pname_{spec}_{i}", None)
                         draft.pop(f"mat_{spec}_{i}", None)
                         draft.pop(f"isprof_{spec}_{i}", None)
+                    # write back new keys
                     for i, (p_name, p_mat, p_isprof) in enumerate(new_profs_list):
                         draft[f"pname_{spec}_{i}"] = p_name
                         draft[f"mat_{spec}_{i}"] = p_mat
                         draft[f"isprof_{spec}_{i}"] = p_isprof
-                    c.execute(
-                        "UPDATE Drafts SET draft_data = %s WHERE username = %s AND form_key = 'prof_form'",
-                        (json.dumps(draft), username)
-                    )
+                    
+                    c.execute("UPDATE Drafts SET draft_data = ? WHERE username = ? AND form_key = 'prof_form'", 
+                              (json.dumps(draft), username))
         conn.commit()
     conn.close()
     return True
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-#  Rooms
-# ─────────────────────────────────────────────────────────────────────────────
-
 def delete_single_room(id_s):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("SELECT nameS, typeS FROM Salles WHERE ID_S = %s", (id_s,))
+    # Get room details to clean up drafts
+    c.execute("SELECT nameS, typeS FROM Salles WHERE ID_S = ?", (id_s,))
     room = c.fetchone()
     if room:
         room_name = room['nameS']
         room_type = room['typeS']
-
-        c.execute("DELETE FROM Salles WHERE ID_S = %s", (id_s,))
-        c.execute("UPDATE Planning SET ID_S = NULL WHERE ID_S = %s", (id_s,))
-
+        
+        # Delete room
+        c.execute("DELETE FROM Salles WHERE ID_S = ?", (id_s,))
+        c.execute("UPDATE Planning SET ID_S = NULL WHERE ID_S = ?", (id_s,))
+        
+        # Clean up drafts
         c.execute("SELECT username, draft_data FROM Drafts WHERE form_key = 'room_form'")
         rows = c.fetchall()
+        import json
         for row in rows:
             username = row['username']
             try:
                 draft = json.loads(row['draft_data'])
-            except Exception:
+            except:
                 continue
-
+            
             modified = False
+            # Check amphis
             if room_type == 1:
                 amphis = []
                 num_amphis = draft.get('num_amphis', 0)
@@ -573,11 +426,14 @@ def delete_single_room(id_s):
                         modified = True
                 if modified:
                     draft['num_amphis'] = len(amphis)
+                    # delete old keys
                     for k in list(draft.keys()):
                         if k.startswith('amphi_'):
                             del draft[k]
+                    # populate new keys
                     for i, name in enumerate(amphis):
                         draft[f'amphi_{i}'] = name
+            # Check tds
             elif room_type == 0:
                 tds = []
                 num_td = draft.get('num_td', 0)
@@ -589,71 +445,57 @@ def delete_single_room(id_s):
                         modified = True
                 if modified:
                     draft['num_td'] = len(tds)
+                    # delete old keys
                     for k in list(draft.keys()):
                         if k.startswith('td_'):
                             del draft[k]
+                    # populate new keys
                     for i, name in enumerate(tds):
                         draft[f'td_{i}'] = name
-
+                        
             if modified:
-                c.execute(
-                    "UPDATE Drafts SET draft_data = %s WHERE username = %s AND form_key = 'room_form'",
-                    (json.dumps(draft), username)
-                )
+                c.execute("UPDATE Drafts SET draft_data = ? WHERE username = ? AND form_key = 'room_form'", 
+                          (json.dumps(draft), username))
         conn.commit()
     conn.close()
     return True
 
-
 def add_single_room(name, type_s):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("SELECT ID_S FROM Salles WHERE nameS = %s", (name,))
+    c.execute("SELECT ID_S FROM Salles WHERE nameS = ?", (name,))
     if c.fetchone():
         conn.close()
         return False, "Room already exists."
-    c.execute("INSERT INTO Salles (typeS, nameS) VALUES (%s, %s)", (type_s, name))
+    c.execute("INSERT INTO Salles (typeS, nameS) VALUES (?, ?)", (type_s, name))
     conn.commit()
     conn.close()
     return True, "Room added successfully."
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-#  Modules
-# ─────────────────────────────────────────────────────────────────────────────
-
 def add_single_module(name, type_m, id_p, id_e):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("INSERT INTO Modules (typeM, nameM, ID_P, ID_E) VALUES (%s, %s, %s, %s)",
-              (type_m, name, id_p, id_e))
+    c.execute("INSERT INTO Modules (typeM, nameM, ID_P, ID_E) VALUES (?, ?, ?, ?)", (type_m, name, id_p, id_e))
     conn.commit()
     conn.close()
     return True
-
 
 def delete_single_module(id_m):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("DELETE FROM Modules WHERE ID_M = %s", (id_m,))
-    c.execute("DELETE FROM Preferences WHERE ID_M = %s", (id_m,))
-    c.execute("DELETE FROM Planning WHERE ID_M = %s", (id_m,))
+    c.execute("DELETE FROM Modules WHERE ID_M = ?", (id_m,))
+    c.execute("DELETE FROM Preferences WHERE ID_M = ?", (id_m,))
+    c.execute("DELETE FROM Planning WHERE ID_M = ?", (id_m,))
     conn.commit()
     conn.close()
     return True
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-#  Preferences
-# ─────────────────────────────────────────────────────────────────────────────
-
 def clear_teacher_preferences(teacher_id):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("DELETE FROM Preferences WHERE ID_P = %s", (teacher_id,))
+    c.execute("DELETE FROM Preferences WHERE ID_P = ?", (teacher_id,))
     conn.commit()
     conn.close()
-
 
 def clear_all_preferences():
     conn = get_db_connection()
@@ -667,13 +509,9 @@ def clear_all_preferences():
 def set_preference_deadline(timestamp):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("""
-        INSERT INTO SystemSettings (key, value) VALUES ('preference_deadline', %s)
-        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
-    """, (str(timestamp),))
+    c.execute("INSERT OR REPLACE INTO SystemSettings (key, value) VALUES ('preference_deadline', ?)", (str(timestamp),))
     conn.commit()
     conn.close()
-
 
 def get_preference_deadline():
     conn = get_db_connection()
@@ -685,17 +523,13 @@ def get_preference_deadline():
         return float(row['value'])
     return None
 
-
 def set_max_unavailability_slots(max_slots):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("""
-        INSERT INTO SystemSettings (key, value) VALUES ('max_unavailability_slots', %s)
-        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
-    """, (str(max_slots),))
+    c.execute("DELETE FROM SystemSettings WHERE key='max_unavailability_slots'")
+    c.execute("INSERT OR REPLACE INTO SystemSettings (key, value) VALUES ('max_unavailability_slots', ?)", (str(max_slots),))
     conn.commit()
     conn.close()
-
 
 def get_max_unavailability_slots():
     conn = get_db_connection()
@@ -705,8 +539,7 @@ def get_max_unavailability_slots():
     conn.close()
     if row:
         return int(row['value'])
-    return 6
-
+    return 6  # Default is 6 slots (1 day)
 
 def get_preference_submission_stats():
     conn = get_db_connection()
@@ -714,64 +547,54 @@ def get_preference_submission_stats():
     c.execute("SELECT COUNT(DISTINCT ID_M) as total_modules FROM Modules WHERE ID_P IS NOT NULL")
     row_tot = c.fetchone()
     total_mod = row_tot['total_modules'] if row_tot else 0
-
-    c.execute("""
-        SELECT COUNT(DISTINCT p.ID_M) as submitted_modules
-        FROM Preferences p JOIN Modules m ON p.ID_M = m.ID_M
-        WHERE m.ID_P IS NOT NULL
-    """)
+    
+    c.execute("SELECT COUNT(DISTINCT p.ID_M) as submitted_modules FROM Preferences p JOIN Modules m ON p.ID_M = m.ID_M WHERE m.ID_P IS NOT NULL")
     row_sub = c.fetchone()
     sub_mod = row_sub['submitted_modules'] if row_sub else 0
     conn.close()
-
+    
     return {
         "total_modules": total_mod or 0,
         "submitted_modules": sub_mod or 0,
         "pending_modules": max(0, (total_mod or 0) - (sub_mod or 0))
     }
 
-
 def auto_assign_missing_preferences():
     import random
     conn = get_db_connection()
     c = conn.cursor()
-
+    
+    # Get all module-professor pairs
     c.execute("SELECT ID_M, ID_P FROM Modules WHERE ID_P IS NOT NULL")
     all_pairs = c.fetchall()
-
+    
+    # Get modules that already have preferences
     c.execute("SELECT DISTINCT ID_M FROM Preferences")
     existing_modules = {str(r['ID_M']) for r in c.fetchall()}
-
+    
     assigned_count = 0
     for row in all_pairs:
         mod_key = str(row['ID_M'])
         if mod_key not in existing_modules:
             slots = random.sample(range(1, 37), 3)
+            # Insert 3 pseudo-preferences
             scores = [0, 10, 20]
             for t, score in zip(slots, scores):
-                c.execute("""
-                    INSERT INTO Preferences (ID_P, ID_M, t, score, is_auto) VALUES (%s, %s, %s, %s, %s)
-                    ON CONFLICT (ID_P, ID_M, t) DO UPDATE SET score = EXCLUDED.score, is_auto = EXCLUDED.is_auto
-                """, (row['ID_P'], row['ID_M'], t, score, 1))
+                c.execute("INSERT OR REPLACE INTO Preferences (ID_P, ID_M, t, score, is_auto) VALUES (?, ?, ?, ?, ?)", 
+                          (row['ID_P'], row['ID_M'], t, score, 1))
             assigned_count += 1
-
+            
     conn.commit()
     conn.close()
     return assigned_count
 
-
 def get_fallback_count():
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("""
-        SELECT COUNT(DISTINCT p.ID_M) as fallback_count
-        FROM Preferences p JOIN Modules m ON p.ID_M = m.ID_M
-        WHERE p.is_auto = 1 AND m.ID_P IS NOT NULL
-    """)
+    c.execute("SELECT COUNT(DISTINCT p.ID_M) as fallback_count FROM Preferences p JOIN Modules m ON p.ID_M = m.ID_M WHERE p.is_auto = 1 AND m.ID_P IS NOT NULL")
     row = c.fetchone()
     conn.close()
     return row['fallback_count'] if row else 0
-
 
 def undo_fallback_preferences():
     conn = get_db_connection()
@@ -780,26 +603,20 @@ def undo_fallback_preferences():
     conn.commit()
     conn.close()
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-#  Drafts
-# ─────────────────────────────────────────────────────────────────────────────
-
 def save_draft(username, form_key, draft_data):
+    import json
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("""
-        INSERT INTO Drafts (username, form_key, draft_data) VALUES (%s, %s, %s)
-        ON CONFLICT (username, form_key) DO UPDATE SET draft_data = EXCLUDED.draft_data
-    """, (username, form_key, json.dumps(draft_data)))
+    c.execute("INSERT OR REPLACE INTO Drafts (username, form_key, draft_data) VALUES (?, ?, ?)", 
+              (username, form_key, json.dumps(draft_data)))
     conn.commit()
     conn.close()
 
-
 def load_draft(username, form_key):
+    import json
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("SELECT draft_data FROM Drafts WHERE username=%s AND form_key=%s", (username, form_key))
+    c.execute("SELECT draft_data FROM Drafts WHERE username=? AND form_key=?", (username, form_key))
     row = c.fetchone()
     conn.close()
     if row:
@@ -809,78 +626,59 @@ def load_draft(username, form_key):
             return {}
     return {}
 
-
 def clear_draft(username, form_key):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("DELETE FROM Drafts WHERE username=%s AND form_key=%s", (username, form_key))
+    c.execute("DELETE FROM Drafts WHERE username=? AND form_key=?", (username, form_key))
     conn.commit()
     conn.close()
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-#  Reschedule requests
-# ─────────────────────────────────────────────────────────────────────────────
 
 def submit_reschedule_request(session_id, id_p, new_t, new_s_id):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute(
-        "SELECT id FROM RescheduleRequests WHERE session_id=%s AND status IN ('Pending_Delegate', 'Pending_Admin')",
-        (session_id,)
-    )
+    c.execute("SELECT id FROM RescheduleRequests WHERE session_id=? AND status IN ('Pending_Delegate', 'Pending_Admin')", (session_id,))
     existing = c.fetchone()
     if existing:
-        c.execute(
-            "UPDATE RescheduleRequests SET new_t=%s, new_s_id=%s, status='Pending_Delegate' WHERE id=%s",
-            (new_t, new_s_id, existing['id'])
-        )
+        c.execute("UPDATE RescheduleRequests SET new_t=?, new_s_id=?, status='Pending_Delegate' WHERE id=?", (new_t, new_s_id, existing['id']))
     else:
-        c.execute(
-            "INSERT INTO RescheduleRequests (session_id, ID_P, new_t, new_s_id, status) VALUES (%s, %s, %s, %s, 'Pending_Delegate')",
-            (session_id, id_p, new_t, new_s_id)
-        )
+        c.execute("INSERT INTO RescheduleRequests (session_id, ID_P, new_t, new_s_id, status) VALUES (?, ?, ?, ?, 'Pending_Delegate')", 
+                  (session_id, id_p, new_t, new_s_id))
     conn.commit()
     conn.close()
-
 
 def get_pending_requests():
     conn = get_db_connection()
     c = conn.cursor()
     c.execute("SELECT r.*, p.nameP FROM RescheduleRequests r JOIN Profs p ON r.ID_P = p.ID_P WHERE r.status='Pending_Admin'")
-    requests = c.fetchall()
+    requests = [dict(row) for row in c.fetchall()]
     conn.close()
     return requests
-
 
 def get_professor_requests(id_p):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("SELECT * FROM RescheduleRequests WHERE ID_P=%s ORDER BY id DESC", (id_p,))
-    requests = c.fetchall()
+    c.execute("SELECT * FROM RescheduleRequests WHERE ID_P=? ORDER BY id DESC", (id_p,))
+    requests = [dict(row) for row in c.fetchall()]
     conn.close()
     return requests
-
 
 def approve_reschedule_request(req_id):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("SELECT session_id, new_t, new_s_id FROM RescheduleRequests WHERE id=%s", (req_id,))
+    c.execute("SELECT session_id, new_t, new_s_id FROM RescheduleRequests WHERE id=?", (req_id,))
     req = c.fetchone()
     if req:
-        c.execute("UPDATE Planning SET t=%s, ID_S=%s WHERE id=%s", (req['new_t'], req['new_s_id'], req['session_id']))
-        c.execute("UPDATE RescheduleRequests SET status='Approved' WHERE id=%s", (req_id,))
+        c.execute("UPDATE Planning SET t=?, ID_S=? WHERE id=?", (req['new_t'], req['new_s_id'], req['session_id']))
+        c.execute("UPDATE RescheduleRequests SET status='Approved' WHERE id=?", (req_id,))
         conn.commit()
     conn.close()
-
 
 def reject_reschedule_request(req_id):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("UPDATE RescheduleRequests SET status='Rejected' WHERE id=%s", (req_id,))
+    c.execute("UPDATE RescheduleRequests SET status='Rejected' WHERE id=?", (req_id,))
     conn.commit()
     conn.close()
-
 
 def clear_all_requests():
     conn = get_db_connection()
@@ -892,69 +690,51 @@ def clear_all_requests():
     conn.commit()
     conn.close()
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-#  Unavailability requests
-# ─────────────────────────────────────────────────────────────────────────────
-
 def submit_unavailability_request(id_p, t, reason):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute(
-        "INSERT INTO UnavailabilityRequests (ID_P, t, reason) VALUES (%s, %s, %s)",
-        (id_p, t, reason)
-    )
+    c.execute("INSERT INTO UnavailabilityRequests (ID_P, t, reason) VALUES (?, ?, ?)", (id_p, t, reason))
     conn.commit()
     conn.close()
-
 
 def get_pending_unavailability_requests():
     conn = get_db_connection()
     c = conn.cursor()
     c.execute("""
-        SELECT ur.*,
-               COALESCE(p.nameP, u.username, 'Prof #' || ur.ID_P::text) AS nameP
+        SELECT ur.*, p.nameP 
         FROM UnavailabilityRequests ur
-        LEFT JOIN Profs p ON ur.ID_P = p.ID_P
-        LEFT JOIN Users u ON u.linked_id = ur.ID_P AND u.role = 'teacher'
+        JOIN Profs p ON ur.ID_P = p.ID_P
         WHERE ur.status = 'Pending'
     """)
-    rows = c.fetchall()
+    rows = [dict(r) for r in c.fetchall()]
     conn.close()
     return rows
-
 
 def approve_unavailability_request(req_id):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("UPDATE UnavailabilityRequests SET status = 'Approved' WHERE id = %s", (req_id,))
-    c.execute("SELECT ID_P, t FROM UnavailabilityRequests WHERE id = %s", (req_id,))
+    c.execute("UPDATE UnavailabilityRequests SET status = 'Approved' WHERE id = ?", (req_id,))
+    c.execute("SELECT ID_P, t FROM UnavailabilityRequests WHERE id = ?", (req_id,))
     row = c.fetchone()
     if row:
-        c.execute("""
-            INSERT INTO Indisponibilites (ID_P, t) VALUES (%s, %s)
-            ON CONFLICT DO NOTHING
-        """, (row['ID_P'], row['t']))
+        c.execute("INSERT OR IGNORE INTO Indisponibilites (ID_P, t) VALUES (?, ?)", (row['ID_P'], row['t']))
     conn.commit()
     conn.close()
-
 
 def reject_unavailability_request(req_id):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("UPDATE UnavailabilityRequests SET status = 'Rejected' WHERE id = %s", (req_id,))
+    c.execute("UPDATE UnavailabilityRequests SET status = 'Rejected' WHERE id = ?", (req_id,))
     conn.commit()
     conn.close()
-
 
 def get_professor_unavailability_requests(id_p):
     conn = get_db_connection()
     c = conn.cursor()
-    c.execute("SELECT * FROM UnavailabilityRequests WHERE ID_P = %s", (id_p,))
-    rows = c.fetchall()
+    c.execute("SELECT * FROM UnavailabilityRequests WHERE ID_P = ?", (id_p,))
+    rows = [dict(r) for r in c.fetchall()]
     conn.close()
     return rows
-
 
 if __name__ == "__main__":
     init_db()
