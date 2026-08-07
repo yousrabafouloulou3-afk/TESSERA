@@ -3,6 +3,7 @@ import re
 import json
 import pandas as pd
 import streamlit as st
+import functools
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  PostgreSQL / Supabase compatibility layer
