@@ -53,6 +53,8 @@ class _CompatCursor:
     def __init__(self, cur):
         self._cur = cur
 
+    @staticmethod
+    @functools.lru_cache(maxsize=512)
     def _adapt(self, q):
         """Convert SQLite-isms to PostgreSQL:
         • bare % (e.g. LIKE 'foo_%') → %% so psycopg2 doesn't treat it as a placeholder
@@ -198,9 +200,6 @@ def init_db():
     ''')
     c.execute('ALTER TABLE Users ADD COLUMN IF NOT EXISTS linked_level TEXT')
 
-    # Re‑create Entities table with proper SERIAL primary key (ensures auto‑generated IDs)
-    # Re‑create Entities table with proper SERIAL primary key (ensures auto‑generated IDs)
-    c.execute('DROP TABLE IF EXISTS Entities CASCADE')
     c.execute('''
         CREATE TABLE IF NOT EXISTS Entities (
             ID_E SERIAL PRIMARY KEY,
@@ -211,7 +210,6 @@ def init_db():
         )
     ''')
 
-
     c.execute('''
         CREATE TABLE IF NOT EXISTS Profs (
             ID_P SERIAL PRIMARY KEY,
@@ -220,9 +218,8 @@ def init_db():
             specialite TEXT,
             matricule TEXT UNIQUE
         )
-    ''')
-    c.execute('ALTER TABLE Profs ADD COLUMN IF NOT EXISTS specialite TEXT')
-    c.execute('ALTER TABLE Profs ADD COLUMN IF NOT EXISTS matricule TEXT')
+    '''
+    )
 
     c.execute('''
         CREATE TABLE IF NOT EXISTS Modules (
