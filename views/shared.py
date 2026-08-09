@@ -252,20 +252,9 @@ def render_schedule_grid(planning_list, title="Schedule", pdf_title=None, hide_g
             pdf.set_auto_page_break(auto=False, margin=0)
             pdf.add_page()
             
-            # Draw Logo if exists
-            try:
-                root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                logo_png = os.path.join(root_dir, "assets", "usthb_logo.png")
-                logo_jpg = os.path.join(root_dir, "assets", "usthb_logo.jpg")
-                if os.path.exists(logo_png):
-                    pdf.image(logo_png, 10, 5, 20)
-                elif os.path.exists(logo_jpg):
-                    pdf.image(logo_jpg, 10, 5, 20)
-            except Exception:
-                pass # Continue generating PDF even if logo fails
-                
             # Draw App Logo top right
             try:
+                root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
                 app_logo = os.path.join(root_dir, "assets", "tessera_logo_rounded.png")
                 if os.path.exists(app_logo):
                     pdf.image(app_logo, 269.5, 5, 15)
@@ -275,9 +264,6 @@ def render_schedule_grid(planning_list, title="Schedule", pdf_title=None, hide_g
             except Exception:
                 pass
             pdf.set_xy(10, 8)
-            pdf.set_font("helvetica", "B", 11)
-            pdf.cell(0, 5, "University of Science and Technology Houari Boumediene", new_x="LMARGIN", new_y="NEXT", align="C")
-            pdf.ln(3)
             pdf.set_font("helvetica", "B", 10)
             pdf.cell(0, 5, actual_pdf_title, new_x="LMARGIN", new_y="NEXT", align="C")
             pdf.ln(3)
