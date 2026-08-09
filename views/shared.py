@@ -263,13 +263,13 @@ def render_schedule_grid(planning_list, title="Schedule", pdf_title=None, hide_g
                     pdf.cell(20, 4, "TESSERA", align="C")
             except Exception:
                 pass
-            pdf.set_xy(10, 8)
+            pdf.set_xy(10, 10)
             pdf.set_font("helvetica", "B", 10)
             pdf.cell(0, 5, actual_pdf_title, new_x="LMARGIN", new_y="NEXT", align="C")
             pdf.ln(3)
             pdf.set_font("helvetica", "B", 9)
             pdf.cell(0, 5, f"{tr('College year:')} {year}      {tr('Semester:')} {sem}", new_x="LMARGIN", new_y="NEXT", align="C")
-            pdf.ln(3)
+            pdf.ln(6)
             
             pdf.set_font("helvetica", "B", 10)
             col_w = 277 / 7
