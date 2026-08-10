@@ -1189,7 +1189,7 @@ def render_academic_settings():
 def show():
     st.title(tr("Admin Dashboard"))
     
-    tab1, tab2, tab3, tab4 = st.tabs([tr("Data Entry"), tr("Approval Dashboard"), tr("AI Engine & Analytics"), tr("Timetables View")])
+    tab1, tab3, tab4, tab2 = st.tabs([tr("Data Entry"), tr("AI Engine & Analytics"), tr("Timetables View"), tr("Approval Dashboard")])
     
     with tab1:
         render_academic_settings()
